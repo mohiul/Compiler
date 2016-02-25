@@ -506,19 +506,20 @@ public class StateTransitionTable {
 		}
 		finalStates.put(37, Constants.ERR);
 		
-		reservedWords.add("and");
-		reservedWords.add("not");
-		reservedWords.add("or");
-		reservedWords.add("if");
-		reservedWords.add("then");
-		reservedWords.add("else");
-		reservedWords.add("for");
-		reservedWords.add("class");
-		reservedWords.add("int");
-		reservedWords.add("float");
-		reservedWords.add("get");
-		reservedWords.add("put");
-		reservedWords.add("return");
+		reservedWords.add(Constants.RESERVED_WORD_AND);
+		reservedWords.add(Constants.RESERVED_WORD_NOT);
+		reservedWords.add(Constants.RESERVED_WORD_OR);
+		reservedWords.add(Constants.RESERVED_WORD_IF);
+		reservedWords.add(Constants.RESERVED_WORD_THEN);
+		reservedWords.add(Constants.RESERVED_WORD_ELSE);
+		reservedWords.add(Constants.RESERVED_WORD_FOR);
+		reservedWords.add(Constants.RESERVED_WORD_CLASS);
+		reservedWords.add(Constants.RESERVED_WORD_INT);
+		reservedWords.add(Constants.RESERVED_WORD_FLOAT);
+		reservedWords.add(Constants.RESERVED_WORD_GET);
+		reservedWords.add(Constants.RESERVED_WORD_PUT);
+		reservedWords.add(Constants.RESERVED_WORD_RETURN);
+		reservedWords.add(Constants.RESERVED_WORD_PROGRAM);
 		
 	}
 

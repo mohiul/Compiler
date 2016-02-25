@@ -32,4 +32,20 @@ public class Constants {
 	public static final String MULTIPLY = "MULTIPLY";
 	public static final String ERR = "ERR";
 	public static final String RESERVED_WORD = "RESERVEDWORD";
+	
+	public static final String RESERVED_WORD_AND = "and";
+	public static final String RESERVED_WORD_NOT = "not";
+	public static final String RESERVED_WORD_OR = "or";
+	public static final String RESERVED_WORD_IF = "if";
+	public static final String RESERVED_WORD_THEN = "then";
+	public static final String RESERVED_WORD_ELSE = "else";
+	public static final String RESERVED_WORD_FOR = "for";
+	public static final String RESERVED_WORD_CLASS = "class";
+	public static final String RESERVED_WORD_INT = "int";
+	public static final String RESERVED_WORD_FLOAT = "float";
+	public static final String RESERVED_WORD_GET = "get";
+	public static final String RESERVED_WORD_PUT = "put";
+	public static final String RESERVED_WORD_RETURN = "return";
+	public static final String RESERVED_WORD_PROGRAM = "program";
+	public static final String DOLLAR = "$";
 }
