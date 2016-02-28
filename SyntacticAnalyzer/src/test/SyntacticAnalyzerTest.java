@@ -16,15 +16,17 @@ public class SyntacticAnalyzerTest {
 
 	@Before
 	public void setUp() throws Exception {
-		parser = new SyntacticAnalyzer("test-program.txt");
+		parser = new SyntacticAnalyzer();
 	}
 
 	@After
 	public void tearDown() throws Exception {
+		parser.closeWriter();
 	}
 
 	@Test
 	public void testParse() throws IOException{
+		parser.setLexReader(Utils.getReader("class test { }; program { int id; int id1; id = 1; id1 = 4; };"));
 		assertTrue(parser.parse());
 	}
 

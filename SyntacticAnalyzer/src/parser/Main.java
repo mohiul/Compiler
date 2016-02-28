@@ -9,9 +9,12 @@ public class Main {
 	private static SyntacticAnalyzer parser;
 
 	public static void main(String[] args) throws IOException{
-		parser = new SyntacticAnalyzer("test-program.txt");
+		parser = new SyntacticAnalyzer();
+		parser.handleFile("test-program.txt");
 		boolean parserReturn = parser.parse();
-		System.out.println("parserReturn: " + parserReturn);
+		if(!parserReturn)
+			System.out.println("parserReturn: " + parserReturn);
+		parser.closeWriter();
 	}
 
 }

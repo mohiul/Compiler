@@ -182,4 +182,16 @@ public class LexicalAnalyzer {
 		this.reader = reader;
 	}
 
+	public int getLineNo() {
+		return lineNo;
+	}
+
+	public int getPosition() {
+		return position;
+	}
+
+	public Writer getWriter() {
+		return writer;
+	}
+
 }
