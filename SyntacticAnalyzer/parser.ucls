@@ -1,34 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <class-diagram version="1.1.9" icons="true" always-add-relationships="false" generalizations="true" realizations="true" 
   associations="true" dependencies="false" nesting-relationships="true" router="FAN">  
-  <class id="1" language="java" name="parser.SyntacticAnalyzer" project="SyntacticAnalyzer" 
-    file="/SyntacticAnalyzer/src/parser/SyntacticAnalyzer.java" binary="false" corner="BOTTOM_RIGHT">    
-    <position height="-1" width="-1" x="324" y="-152"/>    
-    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
-      sort-features="false" accessors="true" visibility="true">      
-      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
-      <operations public="true" package="true" protected="true" private="true" static="true"/>    
-    </display>  
-  </class>  
-  <class id="2" language="java" name="parser.Main" project="SyntacticAnalyzer" 
+  <class id="1" language="java" name="parser.Main" project="SyntacticAnalyzer" 
     file="/SyntacticAnalyzer/src/parser/Main.java" binary="false" corner="BOTTOM_RIGHT">    
-    <position height="-1" width="-1" x="546" y="-150"/>    
+    <position height="-1" width="-1" x="591" y="-226"/>    
     <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
       sort-features="false" accessors="true" visibility="true">      
       <attributes public="true" package="true" protected="true" private="true" static="true"/>      
       <operations public="true" package="true" protected="true" private="true" static="true"/>    
     </display>  
   </class>  
-  <class id="3" language="java" name="test.SyntacticAnalyzerTest" project="SyntacticAnalyzer" 
+  <class id="2" language="java" name="test.SyntacticAnalyzerTest" project="SyntacticAnalyzer" 
     file="/SyntacticAnalyzer/src/test/SyntacticAnalyzerTest.java" binary="false" corner="BOTTOM_RIGHT">    
-    <position height="-1" width="-1" x="69" y="-368"/>    
-    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+    <position height="872" width="198" x="-30" y="-803"/>    
+    <display autosize="false" stereotype="true" package="true" initial-value="false" signature="true" 
       sort-features="false" accessors="true" visibility="true">      
       <attributes public="true" package="true" protected="true" private="true" static="true"/>      
       <operations public="true" package="true" protected="true" private="true" static="true"/>    
     </display>  
   </class>  
-  <class id="4" language="java" name="lex.LexicalAnalyzer" project="LexicalAnalyzer" 
+  <class id="3" language="java" name="lex.LexicalAnalyzer" project="LexicalAnalyzer" 
     file="/LexicalAnalyzer/src/lex/LexicalAnalyzer.java" binary="false" corner="BOTTOM_RIGHT">    
     <position height="-1" width="-1" x="598" y="-565"/>    
     <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
@@ -37,28 +28,37 @@
       <operations public="true" package="true" protected="true" private="true" static="true"/>    
     </display>  
   </class>  
+  <class id="4" language="java" name="parser.SyntacticAnalyzer" project="SyntacticAnalyzer" 
+    file="/SyntacticAnalyzer/src/parser/SyntacticAnalyzer.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="1303" width="207" x="219" y="-803"/>    
+    <display autosize="false" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
   <association id="5">    
-    <end type="SOURCE" refId="3" navigable="false">      
+    <end type="SOURCE" refId="2" navigable="false">      
       <attribute id="6" name="parser"/>      
       <multiplicity id="7" minimum="0" maximum="1"/>    
-    </end>    
-    <end type="TARGET" refId="1" navigable="true"/>    
-    <display labels="true" multiplicity="true"/>  
-  </association>  
-  <association id="8">    
-    <end type="SOURCE" refId="1" navigable="false">      
-      <attribute id="9" name="lex"/>      
-      <multiplicity id="10" minimum="0" maximum="1"/>    
     </end>    
     <end type="TARGET" refId="4" navigable="true"/>    
     <display labels="true" multiplicity="true"/>  
   </association>  
+  <association id="8">    
+    <end type="SOURCE" refId="4" navigable="false">      
+      <attribute id="9" name="lex"/>      
+      <multiplicity id="10" minimum="0" maximum="1"/>    
+    </end>    
+    <end type="TARGET" refId="3" navigable="true"/>    
+    <display labels="true" multiplicity="true"/>  
+  </association>  
   <association id="11">    
-    <end type="SOURCE" refId="2" navigable="false">      
+    <end type="SOURCE" refId="1" navigable="false">      
       <attribute id="12" name="parser"/>      
       <multiplicity id="13" minimum="0" maximum="1"/>    
     </end>    
-    <end type="TARGET" refId="1" navigable="true"/>    
+    <end type="TARGET" refId="4" navigable="true"/>    
     <display labels="true" multiplicity="true"/>  
   </association>  
   <classifier-display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 

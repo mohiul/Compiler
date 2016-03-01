@@ -43,6 +43,69 @@ public class SyntacticAnalyzer {
 		lex.readFirstChar();
 	}
 	
+	private boolean skipErrors(String[] first, String[] follow) throws IOException {
+		if(lookAheadIsIn(lookAhead, first) 
+				|| lookAheadIsIn(lookAhead, follow)) {
+			return true;
+		} else {
+			writeError();
+		    while (!lookAheadIsIn(lookAhead, first) 
+					&& !lookAheadIsIn(lookAhead, follow) && lookAheadToken != null ){
+				lookAheadToken = lex.getNextToken();
+				lookAhead = getLookAhead();
+//    			if (EPSILON is not in [FIRST] and lookahead is in [FOLLOW])
+//    				return false		// error detected and parsing function should be aborted
+		    }
+			return true;
+		}
+	}
+
+	private void writeError() throws IOException {
+		String errMsg = "Syntax error at line: " 
+				+ ( lookAheadToken != null? lookAheadToken.getLineNo() : lex.getLineNo() )  
+				+ " position: " 
+				+ ( lookAheadToken != null? lookAheadToken.getPositionInLine() : lex.getPosition() )
+				+ ( lookAheadToken != null? ": " + lookAheadToken.getValue(): "");
+		writer.write(errMsg + "\n");
+		System.err.println(errMsg);
+	}
+
+	private boolean match(String strToMatch) throws IOException {
+		boolean match = false;
+		if(strToMatch.equalsIgnoreCase(lookAhead)){
+			match = true;
+		} else {
+			writeError();
+		}
+		if(lookAheadToken != null){
+			lookAheadToken = lex.getNextToken();
+			lookAhead = getLookAhead();
+		}
+		return match;
+	}
+	
+	private boolean lookAheadIsIn(String lookAhead, String... strToMatchArr) {
+		boolean matches = false;
+		for(String str : strToMatchArr){
+			if(str.equalsIgnoreCase(lookAhead)){
+				matches = true;
+			}
+		}
+		return matches;
+	}
+	
+	private String getLookAhead() {
+		String lookAhead = Constants.DOLLAR;
+		if(lookAheadToken != null){
+			lookAhead = lookAheadToken.getType();
+			if(lookAheadToken.getType().equalsIgnoreCase(Constants.RESERVED_WORD)){
+				lookAhead = lookAheadToken.getValue();
+			}
+		}
+
+		return lookAhead;
+	}
+	
 	public boolean parse() throws IOException{
 		lookAheadToken = lex.getNextToken();
 		lookAhead = getLookAhead();
@@ -1524,67 +1587,4 @@ public class SyntacticAnalyzer {
 		return !error;
 	}
 	
-	private boolean skipErrors(String[] first, String[] follow) throws IOException {
-		if(lookAheadIsIn(lookAhead, first) 
-				|| lookAheadIsIn(lookAhead, follow)) {
-			return true;
-		} else {
-			writeError();
-		    while (!lookAheadIsIn(lookAhead, first) 
-					&& !lookAheadIsIn(lookAhead, follow) && lookAheadToken != null ){
-				lookAheadToken = lex.getNextToken();
-				lookAhead = getLookAhead();
-//    			if (EPSILON is not in [FIRST] and lookahead is in [FOLLOW])
-//    				return false		// error detected and parsing function should be aborted
-		    }
-			return true;
-		}
-	}
-
-	private void writeError() throws IOException {
-		String errMsg = "Syntax error at line: " 
-				+ ( lookAheadToken != null? lookAheadToken.getLineNo() : lex.getLineNo() )  
-				+ " position: " 
-				+ ( lookAheadToken != null? lookAheadToken.getPositionInLine() : lex.getPosition() )
-				+ ( lookAheadToken != null? ": " + lookAheadToken.getValue(): "");
-		writer.write(errMsg + "\n");
-		System.err.println(errMsg);
-	}
-
-	private boolean match(String strToMatch) throws IOException {
-		boolean match = false;
-		if(strToMatch.equalsIgnoreCase(lookAhead)){
-			match = true;
-		} else {
-			writeError();
-		}
-		if(lookAheadToken != null){
-			lookAheadToken = lex.getNextToken();
-			lookAhead = getLookAhead();
-		}
-		return match;
-	}
-	
-	private boolean lookAheadIsIn(String lookAhead, String... strToMatchArr) {
-		boolean matches = false;
-		for(String str : strToMatchArr){
-			if(str.equalsIgnoreCase(lookAhead)){
-				matches = true;
-			}
-		}
-		return matches;
-	}
-	
-	private String getLookAhead() {
-		String lookAhead = Constants.DOLLAR;
-		if(lookAheadToken != null){
-			lookAhead = lookAheadToken.getType();
-			if(lookAheadToken.getType().equalsIgnoreCase(Constants.RESERVED_WORD)){
-				lookAhead = lookAheadToken.getValue();
-			}
-		}
-
-		return lookAhead;
-	}
-
 }
