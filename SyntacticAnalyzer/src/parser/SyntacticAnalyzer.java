@@ -1092,7 +1092,7 @@ public class SyntacticAnalyzer {
 	}
 	
 	private boolean factorTail2() throws IOException{
-		if (!skipErrors(new String[] { Constants.ID },
+		if (!skipErrors(new String[] { Constants.POINT },
 				new String[] { Constants.LT,
 						Constants.LESSEQ,
 						Constants.NOTEQ,
