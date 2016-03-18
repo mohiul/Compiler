@@ -9,15 +9,18 @@ import java.io.Writer;
 import lex.Constants;
 import lex.LexicalAnalyzer;
 import lex.Token;
+import smbl.SymbolTableHandler;
 
 public class SyntacticAnalyzer {
 
 	private LexicalAnalyzer lex;
 	boolean error;
+	Token prevLookAheadToken;
 	Token lookAheadToken;
 	String lookAhead;
 	Writer writer;
 	Writer grammarWriter;
+	SymbolTableHandler tableHandler; 
 	
 	public SyntacticAnalyzer() throws IOException{
 		error = false;
@@ -27,6 +30,7 @@ public class SyntacticAnalyzer {
 		grammarWriter = new BufferedWriter(
 				new OutputStreamWriter(
 				new FileOutputStream("grammars.txt"), "utf-8"));
+		tableHandler = new SymbolTableHandler();
 	}
 	
 	public void handleFile(String file) throws IOException{
@@ -51,10 +55,9 @@ public class SyntacticAnalyzer {
 			writeError();
 		    while (!lookAheadIsIn(lookAhead, first) 
 					&& !lookAheadIsIn(lookAhead, follow) && lookAheadToken != null ){
+		    	prevLookAheadToken = lookAheadToken;
 				lookAheadToken = lex.getNextToken();
 				lookAhead = getLookAhead();
-//    			if (EPSILON is not in [FIRST] and lookahead is in [FOLLOW])
-//    				return false		// error detected and parsing function should be aborted
 		    }
 			return true;
 		}
@@ -78,6 +81,7 @@ public class SyntacticAnalyzer {
 			writeError();
 		}
 		if(lookAheadToken != null){
+			prevLookAheadToken = lookAheadToken;
 			lookAheadToken = lex.getNextToken();
 			lookAhead = getLookAhead();
 		}
@@ -104,9 +108,10 @@ public class SyntacticAnalyzer {
 		}
 
 		return lookAhead;
-	}
+	}	
 	
 	public boolean parse() throws IOException{
+		prevLookAheadToken = lookAheadToken;
 		lookAheadToken = lex.getNextToken();
 		lookAhead = getLookAhead();
 		
@@ -124,7 +129,7 @@ public class SyntacticAnalyzer {
 		if(lookAheadIsIn(lookAhead, new String[]{
 				Constants.RESERVED_WORD_CLASS, 
 				Constants.RESERVED_WORD_PROGRAM})){
-			if(classDeclList() && progBody()){
+			if( tableHandler.createGlobalTable() && classDeclList() && progBody()){
 				grammarWriter.write("prog -> classDeclList progBody\n");
 			} else {
 				error = true;
@@ -160,6 +165,7 @@ public class SyntacticAnalyzer {
 		if(lookAheadIsIn(lookAhead, new String[]{ Constants.RESERVED_WORD_CLASS })){
 			if(match(Constants.RESERVED_WORD_CLASS) 
 					&& match(Constants.ID)
+					&& tableHandler.createClassEntryAndTable(prevLookAheadToken)
 					&& match(Constants.OPENCRLBRACKET)
 					&& varFuncDefs()
 					&& match(Constants.CLOSECRLBRACKET)
@@ -254,7 +260,9 @@ public class SyntacticAnalyzer {
 		if(lookAheadIsIn(lookAhead, new String[]{
 				Constants.OPENSQBRACKET, 
 				Constants.SEMICOLON})){
-			if(arraySizeList() && match(Constants.SEMICOLON)){
+			if(arraySizeList() 
+					&& match(Constants.SEMICOLON) 
+					&& tableHandler.createVariableEntry(prevLookAheadToken)){
 				grammarWriter.write("varDefTail	-> arraySizeList ';'\n");
 			} else {
 				error = true;
@@ -273,6 +281,7 @@ public class SyntacticAnalyzer {
 			if(match(Constants.OPENPAR) 
 					&& fParams()
 					&& match(Constants.CLOSEPAR)
+					&& tableHandler.createFunctionEntryAndTable(prevLookAheadToken)
 					&& funcBody()
 					&& match(Constants.SEMICOLON)){
 				grammarWriter.write("funcDefTail	-> '(' fParams ')' funcBody ';'\n");
@@ -291,6 +300,7 @@ public class SyntacticAnalyzer {
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{ Constants.RESERVED_WORD_PROGRAM })){
 			if(match(Constants.RESERVED_WORD_PROGRAM)
+					&& tableHandler.createProgramTable(prevLookAheadToken)
 					&& funcBody()
 					&& match(Constants.SEMICOLON)
 					&& funcDefList()){
@@ -358,7 +368,8 @@ public class SyntacticAnalyzer {
 			if(type() && match(Constants.ID) 
 					&& match(Constants.OPENPAR)
 					&& fParams()
-					&& match(Constants.CLOSEPAR)){
+					&& match(Constants.CLOSEPAR)
+					&& tableHandler.createFunctionEntryAndTable(prevLookAheadToken)){
 				grammarWriter.write("funcHead -> type 'id' '(' fParams ')'\n");
 			} else {
 				error = true;
@@ -493,7 +504,8 @@ public class SyntacticAnalyzer {
 		if(lookAheadIsIn(lookAhead, new String[]{Constants.ID})){
 			if(match(Constants.ID) 
 					&& arraySizeList()
-					&& match(Constants.SEMICOLON)){
+					&& match(Constants.SEMICOLON)
+					&& tableHandler.createVariableEntry(prevLookAheadToken)){
 				grammarWriter.write("varDeclTail -> id arraySizeList ;\n");
 			} else {
 				error = true;
@@ -1355,7 +1367,11 @@ public class SyntacticAnalyzer {
 		if(lookAheadIsIn(lookAhead, new String[]{ Constants.RESERVED_WORD_FLOAT,
 				Constants.ID,
 				Constants.RESERVED_WORD_INT })) {
-			if(type() && match(Constants.ID) && arraySizeList() && fParamsTailList()){
+			if(type() 
+					&& match(Constants.ID) 
+					&& arraySizeList()
+					&& tableHandler.createParameterEntry(prevLookAheadToken)
+					&& fParamsTailList()){
 				grammarWriter.write("fParams -> type 'id' arraySizeList fParamsTailList\n");
 			} else {
 				error = true;
@@ -1419,7 +1435,11 @@ public class SyntacticAnalyzer {
 				new String[]{ }) )
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{ Constants.COMMA})) {
-			if(match(Constants.COMMA) && type() && match(Constants.ID) && arraySizeList()){
+			if(match(Constants.COMMA) 
+					&& type() 
+					&& match(Constants.ID) 
+					&& arraySizeList() 
+					&& tableHandler.createParameterEntry(prevLookAheadToken)){
 				grammarWriter.write("fParamsTail -> ',' type 'id' arraySizeList\n");
 			} else {
 				error = true;
