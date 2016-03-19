@@ -29,7 +29,7 @@ public class SymbolTableTest {
 		String tokenName = "testId";
 		Token token = new Token(Constants.ID, tokenName, 0, 0);
 		table.addRowAndTable(token, VariableKind.CLASS);
-		assertNotEquals(0, table.tableMap.size());
+		assertNotEquals(0, table.tableRowMap.size());
 	}
 
 }

@@ -1,6 +1,8 @@
 package smbl;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class SymbolTableRow {
 	String varName;
@@ -10,6 +12,7 @@ public class SymbolTableRow {
 	
 	public SymbolTableRow(String varName) {
 		this.varName = varName;
+		typeList = new ArrayList<VariableType>();
 	}
 	
 	public SymbolTableRow(String varName, List<VariableType> typeList, VariableKind kind) {
@@ -55,6 +58,42 @@ public class SymbolTableRow {
 
 	public void setLink(SymbolTable link) {
 		this.link = link;
+	}
+
+	public String getVariableKindStr(){
+		String str = "";
+		switch(kind){
+		case FUNCTION:
+			str += "FUNCTION";
+			break;
+		case CLASS:
+			str += "CLASS";
+			break;
+		case PARAMETER:
+			str += "PARAMETER";
+			break;
+		case VARIABLE:
+			str += "VARIABLE";
+			break;
+		}
+		return str;
+	}
+	
+	public String toString(Map<String, SymbolTable> tableMap) {
+		if(link != null) tableMap.put(varName, link);
+		String str = "Name: " + varName + " kind: " + getVariableKindStr();
+		if(typeList.size() > 0){
+			str += " type: " + printTypeList();
+		}
+		return str;
+	}
+
+	private String printTypeList() {
+		String str = "";
+		for(VariableType type: typeList){
+			str += type.toString();
+		}
+		return str;
 	}
 	
 }

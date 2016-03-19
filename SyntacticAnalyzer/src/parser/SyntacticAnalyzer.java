@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
+import java.util.ArrayList;
+import java.util.List;
 
 import lex.Constants;
 import lex.LexicalAnalyzer;
@@ -15,8 +17,8 @@ public class SyntacticAnalyzer {
 
 	private LexicalAnalyzer lex;
 	boolean error;
-	Token prevLookAheadToken;
 	Token lookAheadToken;
+	Token prevLookAheadToken;
 	String lookAhead;
 	Writer writer;
 	Writer grammarWriter;
@@ -55,7 +57,6 @@ public class SyntacticAnalyzer {
 			writeError();
 		    while (!lookAheadIsIn(lookAhead, first) 
 					&& !lookAheadIsIn(lookAhead, follow) && lookAheadToken != null ){
-		    	prevLookAheadToken = lookAheadToken;
 				lookAheadToken = lex.getNextToken();
 				lookAhead = getLookAhead();
 		    }
@@ -71,6 +72,19 @@ public class SyntacticAnalyzer {
 				+ ( lookAheadToken != null? ": " + lookAheadToken.getValue(): "");
 		writer.write(errMsg + "\n");
 		System.err.println(errMsg);
+	}
+
+	private boolean match(String strToMatch, Token matchedToken) throws IOException {
+		boolean match = match(strToMatch);
+		copyValue(matchedToken, prevLookAheadToken);
+		return match;
+	}
+	
+	private void copyValue(Token toToken, Token fromToken) {
+		toToken.setType(fromToken.getType());
+		toToken.setValue(fromToken.getValue());
+		toToken.setLineNo(fromToken.getLineNo());
+		toToken.setPositionInLine(fromToken.getPositionInLine());
 	}
 
 	private boolean match(String strToMatch) throws IOException {
@@ -111,14 +125,15 @@ public class SyntacticAnalyzer {
 	}	
 	
 	public boolean parse() throws IOException{
-		prevLookAheadToken = lookAheadToken;
 		lookAheadToken = lex.getNextToken();
 		lookAhead = getLookAhead();
 		
-		if(prog() && match(Constants.DOLLAR)) 
+		if(prog() && match(Constants.DOLLAR)){
+			tableHandler.print();
 			return true;
-		else 
-			return false;
+		} else {
+			return false;			
+		}
 	}
 	
 	private boolean prog() throws IOException{
@@ -159,13 +174,14 @@ public class SyntacticAnalyzer {
 	}
 	
 	private boolean classDecl() throws IOException{
+		Token id = new Token();
 		if (!skipErrors(new String[] { Constants.RESERVED_WORD_CLASS },
 				new String[] { }))
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{ Constants.RESERVED_WORD_CLASS })){
 			if(match(Constants.RESERVED_WORD_CLASS) 
-					&& match(Constants.ID)
-					&& tableHandler.createClassEntryAndTable(prevLookAheadToken)
+					&& match(Constants.ID, id)
+					&& tableHandler.createClassEntryAndTable(id)
 					&& match(Constants.OPENCRLBRACKET)
 					&& varFuncDefs()
 					&& match(Constants.CLOSECRLBRACKET)
@@ -206,6 +222,8 @@ public class SyntacticAnalyzer {
 	}
 	
 	private boolean varFuncDef() throws IOException{
+		Token type = new Token();
+		Token id = new Token();
 		if (!skipErrors(new String[] { Constants.RESERVED_WORD_FLOAT, 
 				Constants.ID,
 				Constants.RESERVED_WORD_INT },
@@ -215,7 +233,9 @@ public class SyntacticAnalyzer {
 				Constants.RESERVED_WORD_FLOAT, 
 				Constants.ID,
 				Constants.RESERVED_WORD_INT})){
-			if(type() && match(Constants.ID) && varFuncDefTail()){
+			if(type(type) 
+					&& match(Constants.ID, id) 
+					&& varFuncDefTail(type, id)){
 				grammarWriter.write("varFuncDef	-> type 'id' varFuncDefTail\n");
 			} else {
 				error = true;
@@ -226,7 +246,7 @@ public class SyntacticAnalyzer {
 		return !error;
 	}
 	
-	private boolean varFuncDefTail() throws IOException{
+	private boolean varFuncDefTail(Token type, Token id) throws IOException{
 		if (!skipErrors(new String[] { Constants.OPENSQBRACKET, 
 				Constants.SEMICOLON,
 				Constants.OPENPAR },
@@ -235,13 +255,13 @@ public class SyntacticAnalyzer {
 		if(lookAheadIsIn(lookAhead, new String[]{
 				Constants.OPENSQBRACKET, 
 				Constants.SEMICOLON})){
-			if(varDefTail()){
+			if(varDefTail(type, id)){
 				grammarWriter.write("varFuncDefTail -> varDefTail\n");
 			} else {
 				error = true;
 			}
 		} else if(lookAheadIsIn(lookAhead, new String[]{ Constants.OPENPAR})) {
-			if(funcDefTail()){
+			if(funcDefTail(type, id)){
 				grammarWriter.write("varFuncDefTail -> funcDefTail\n");
 			} else {
 				error = true;
@@ -252,7 +272,8 @@ public class SyntacticAnalyzer {
 		return !error;
 	}
 	
-	private boolean varDefTail() throws IOException{
+	private boolean varDefTail(Token type, Token id) throws IOException{
+		List<Token> arraySizeList = new ArrayList<Token>();
 		if (!skipErrors(new String[] { Constants.OPENSQBRACKET, 
 				Constants.SEMICOLON },
 				new String[] { }))
@@ -260,9 +281,9 @@ public class SyntacticAnalyzer {
 		if(lookAheadIsIn(lookAhead, new String[]{
 				Constants.OPENSQBRACKET, 
 				Constants.SEMICOLON})){
-			if(arraySizeList() 
+			if(arraySizeList(arraySizeList)
 					&& match(Constants.SEMICOLON) 
-					&& tableHandler.createVariableEntry(prevLookAheadToken)){
+					&& tableHandler.createVariableEntry(type, id, arraySizeList)){
 				grammarWriter.write("varDefTail	-> arraySizeList ';'\n");
 			} else {
 				error = true;
@@ -273,15 +294,15 @@ public class SyntacticAnalyzer {
 		return !error;
 	}
 	
-	private boolean funcDefTail() throws IOException{
+	private boolean funcDefTail(Token type, Token id) throws IOException{
 		if (!skipErrors(new String[] { Constants.OPENPAR },
 				new String[] { }))
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{ Constants.OPENPAR })) {
 			if(match(Constants.OPENPAR) 
+					&& tableHandler.createFunctionEntryAndTable(type, id)
 					&& fParams()
 					&& match(Constants.CLOSEPAR)
-					&& tableHandler.createFunctionEntryAndTable(prevLookAheadToken)
 					&& funcBody()
 					&& match(Constants.SEMICOLON)){
 				grammarWriter.write("funcDefTail	-> '(' fParams ')' funcBody ';'\n");
@@ -295,12 +316,13 @@ public class SyntacticAnalyzer {
 	}
 	
 	private boolean progBody() throws IOException{
+		Token program = new Token();
 		if (!skipErrors(new String[] { Constants.RESERVED_WORD_PROGRAM },
 				new String[] { }))
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{ Constants.RESERVED_WORD_PROGRAM })){
-			if(match(Constants.RESERVED_WORD_PROGRAM)
-					&& tableHandler.createProgramTable(prevLookAheadToken)
+			if(match(Constants.RESERVED_WORD_PROGRAM, program)
+					&& tableHandler.createProgramTable(program)
 					&& funcBody()
 					&& match(Constants.SEMICOLON)
 					&& funcDefList()){
@@ -357,6 +379,8 @@ public class SyntacticAnalyzer {
 	}
 	
 	private boolean funcHead() throws IOException{
+		Token type = new Token();
+		Token id = new Token();
 		if (!skipErrors(new String[] { Constants.RESERVED_WORD_INT,
 				Constants.RESERVED_WORD_FLOAT,
 				Constants.ID },
@@ -365,11 +389,11 @@ public class SyntacticAnalyzer {
 		if(lookAheadIsIn(lookAhead, new String[]{Constants.RESERVED_WORD_INT,
 				Constants.RESERVED_WORD_FLOAT,
 				Constants.ID})){
-			if(type() && match(Constants.ID) 
+			if(type(type) && match(Constants.ID, id)
 					&& match(Constants.OPENPAR)
+					&& tableHandler.createFunctionEntryAndTable(type, id)
 					&& fParams()
-					&& match(Constants.CLOSEPAR)
-					&& tableHandler.createFunctionEntryAndTable(prevLookAheadToken)){
+					&& match(Constants.CLOSEPAR)){
 				grammarWriter.write("funcHead -> type 'id' '(' fParams ')'\n");
 			} else {
 				error = true;
@@ -431,6 +455,8 @@ public class SyntacticAnalyzer {
 	}
 	
 	private boolean varDeclStat() throws IOException{
+		Token type = new Token();
+		Token id = new Token();
 		if (!skipErrors(new String[] { Constants.RESERVED_WORD_FLOAT,
 				Constants.RESERVED_WORD_INT, 
 				Constants.RESERVED_WORD_FOR,
@@ -443,7 +469,7 @@ public class SyntacticAnalyzer {
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{Constants.RESERVED_WORD_FLOAT,
 				Constants.RESERVED_WORD_INT})){
-			if(nonidtype() && varDeclTail()){
+			if(nonidtype(type) && varDeclTail(type)){
 				grammarWriter.write("varDeclStat -> nonidtype varDeclTail\n");
 			} else {
 				error = true;
@@ -459,7 +485,7 @@ public class SyntacticAnalyzer {
 				error = true;
 			}
 		} else if(lookAheadIsIn(lookAhead, new String[]{Constants.ID})){
-			if(match(Constants.ID) && varDeclStatTail()){
+			if(match(Constants.ID, id) && varDeclStatTail(id)){
 				grammarWriter.write("varDeclStat -> 'id' varDeclStatTail\n");
 			} else {
 				error = true;
@@ -470,7 +496,7 @@ public class SyntacticAnalyzer {
 		return !error;
 	}
 
-	private boolean varDeclStatTail() throws IOException{
+	private boolean varDeclStatTail(Token type) throws IOException{
 		if (!skipErrors(new String[] { Constants.ID, 
 				Constants.OPENSQBRACKET,
 				Constants.POINT,
@@ -478,7 +504,7 @@ public class SyntacticAnalyzer {
 				new String[] { }))
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{Constants.ID})){
-			if(varDeclTail()){
+			if(varDeclTail(type)){
 				grammarWriter.write("varDeclStatTail -> varDeclTail\n");
 			} else {
 				error = true;
@@ -497,15 +523,17 @@ public class SyntacticAnalyzer {
 		return !error;
 	}
 	
-	private boolean varDeclTail() throws IOException{
+	private boolean varDeclTail(Token type) throws IOException{
+		Token id = new Token();
+		List<Token> arraySizeList = new ArrayList<Token>();
 		if (!skipErrors(new String[] { Constants.ID },
 				new String[] { }))
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{Constants.ID})){
-			if(match(Constants.ID) 
-					&& arraySizeList()
+			if(match(Constants.ID, id) 
+					&& arraySizeList(arraySizeList)
 					&& match(Constants.SEMICOLON)
-					&& tableHandler.createVariableEntry(prevLookAheadToken)){
+					&& tableHandler.createVariableEntry(type, id, arraySizeList)){
 				grammarWriter.write("varDeclTail -> id arraySizeList ;\n");
 			} else {
 				error = true;
@@ -690,10 +718,13 @@ public class SyntacticAnalyzer {
 				error = true;
 			}
 		} else if(lookAheadIsIn(lookAhead, new String[]{ Constants.RESERVED_WORD_FOR })){
+			Token type = new Token();
+			Token id = new Token();
 			if(match(Constants.RESERVED_WORD_FOR)
 					&& match(Constants.OPENPAR)
-					&& type()
-					&& match(Constants.ID)
+					&& type(type)
+					&& match(Constants.ID, id)
+					&& tableHandler.createVariableEntry(type, id, null)
 					&& assignOp()
 					&& expr()
 					&& match(Constants.SEMICOLON)
@@ -1272,13 +1303,15 @@ public class SyntacticAnalyzer {
 		return !error;
 	}
 	
-	private boolean arraySizeList() throws IOException{
+	private boolean arraySizeList(List<Token> arraySizeList) throws IOException{
+		Token arraySize = new Token();
 		if (!skipErrors(new String[] { Constants.OPENSQBRACKET },
 				new String[] { Constants.CLOSEPAR, Constants.SEMICOLON, Constants.COMMA }))
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{Constants.OPENSQBRACKET})){
-			if(arraySize() && arraySizeList()){
+			if(arraySize(arraySize) && arraySizeList(arraySizeList)){
 				grammarWriter.write("arraySizeList -> arraySize arraySizeList\n");
+				arraySizeList.add(arraySize);
 			} else {
 				error = true;
 			}
@@ -1292,14 +1325,13 @@ public class SyntacticAnalyzer {
 		return !error;
 	}
 	
-	private boolean arraySize() throws IOException{
+	private boolean arraySize(Token arraySize) throws IOException{
 		if ( !skipErrors(new String[]{ Constants.OPENSQBRACKET },
 				new String[]{ }) )
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{Constants.OPENSQBRACKET})){
-			if(match(Constants.OPENSQBRACKET) 
-//					&& match(Constants.RESERVED_WORD_INT)
-					&& match(Constants.NUM)
+			if(match(Constants.OPENSQBRACKET)
+					&& match(Constants.NUM, arraySize)
 					&& match(Constants.CLOSESQBRACKET)){
 				grammarWriter.write("arraySize -> '[' 'num' ']'\n");
 			} else {
@@ -1311,21 +1343,21 @@ public class SyntacticAnalyzer {
 		return !error;
 	}
 	
-	private boolean type() throws IOException{
+	private boolean type(Token type) throws IOException{
 		if ( !skipErrors(new String[]{ Constants.RESERVED_WORD_FLOAT,
 				Constants.RESERVED_WORD_INT, 
 				Constants.ID },
 				new String[]{ }) )
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{ Constants.ID })){
-			if(match(Constants.ID)){ 
+			if(match(Constants.ID, type)){ 
 				grammarWriter.write("type -> 'id'\n");
 			} else {
 				error = true;
 			}
 		} else if(lookAheadIsIn(lookAhead, new String[]{Constants.RESERVED_WORD_INT,
 				Constants.RESERVED_WORD_FLOAT})){
-			if(nonidtype()){ 
+			if(nonidtype(type)){ 
 				grammarWriter.write("type -> nonidtype\n");
 			} else {
 				error = true;
@@ -1336,18 +1368,18 @@ public class SyntacticAnalyzer {
 		return !error;
 	}
 	
-	private boolean nonidtype() throws IOException{
+	private boolean nonidtype(Token type) throws IOException{
 		error = !skipErrors(new String[]{ Constants.RESERVED_WORD_FLOAT,
 				Constants.RESERVED_WORD_INT }, 
 				new String[]{ });
 		if(lookAheadIsIn(lookAhead, new String[]{Constants.RESERVED_WORD_INT})){
-			if(match(Constants.RESERVED_WORD_INT)){ 
+			if(match(Constants.RESERVED_WORD_INT, type)){ 
 				grammarWriter.write("type -> 'int'\n");
 			} else {
 				error = true;
 			}
 		} else if(lookAheadIsIn(lookAhead, new String[]{ Constants.RESERVED_WORD_FLOAT })){
-			if(match(Constants.RESERVED_WORD_FLOAT)){ 
+			if(match(Constants.RESERVED_WORD_FLOAT, type)){ 
 				grammarWriter.write("type -> 'float'\n");
 			} else {
 				error = true;
@@ -1359,6 +1391,9 @@ public class SyntacticAnalyzer {
 	}
 	
 	private boolean fParams() throws IOException{
+		Token type = new Token();
+		Token id = new Token();
+		List<Token> arraySizeList = new ArrayList<Token>();
 		if ( !skipErrors(new String[]{ Constants.RESERVED_WORD_FLOAT,
 				Constants.ID,
 				Constants.RESERVED_WORD_INT }, 
@@ -1367,10 +1402,10 @@ public class SyntacticAnalyzer {
 		if(lookAheadIsIn(lookAhead, new String[]{ Constants.RESERVED_WORD_FLOAT,
 				Constants.ID,
 				Constants.RESERVED_WORD_INT })) {
-			if(type() 
-					&& match(Constants.ID) 
-					&& arraySizeList()
-					&& tableHandler.createParameterEntry(prevLookAheadToken)
+			if(type(type) 
+					&& match(Constants.ID, id)
+					&& arraySizeList(arraySizeList)
+					&& tableHandler.createParameterEntry(type, id, arraySizeList)
 					&& fParamsTailList()){
 				grammarWriter.write("fParams -> type 'id' arraySizeList fParamsTailList\n");
 			} else {
@@ -1431,15 +1466,18 @@ public class SyntacticAnalyzer {
 	}
 	
 	private boolean fParamsTail() throws IOException{
+		Token type = new Token();
+		Token id = new Token();
+		List<Token> arraySizeList = new ArrayList<Token>();
 		if ( !skipErrors(new String[]{ Constants.COMMA }, 
 				new String[]{ }) )
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{ Constants.COMMA})) {
 			if(match(Constants.COMMA) 
-					&& type() 
-					&& match(Constants.ID) 
-					&& arraySizeList() 
-					&& tableHandler.createParameterEntry(prevLookAheadToken)){
+					&& type(type) 
+					&& match(Constants.ID, id) 
+					&& arraySizeList(arraySizeList) 
+					&& tableHandler.createParameterEntry(type, id, arraySizeList)){
 				grammarWriter.write("fParamsTail -> ',' type 'id' arraySizeList\n");
 			} else {
 				error = true;

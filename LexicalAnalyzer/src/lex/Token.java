@@ -13,6 +13,9 @@ public class Token {
 		this.positionInLine = positionInLine;
 	}
 
+	public Token() {
+	}
+
 	public String getType() {
 		return type;
 	}
