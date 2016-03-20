@@ -8,9 +8,11 @@ import java.util.Map;
 import lex.Token;
 
 public class SymbolTable {
+	private String tableName;
 	public Map<String, SymbolTableRow> tableRowMap;
 
-	public SymbolTable() {
+	public SymbolTable(String tableName) {
+		this.tableName = tableName;
 		tableRowMap = new LinkedHashMap<String, SymbolTableRow>();
 	}
 
@@ -18,7 +20,7 @@ public class SymbolTable {
 		String name = id.getValue();
 		SymbolTableRow row = new SymbolTableRow(name);
 		row.setKind(kind);
-		SymbolTable linkTable = new SymbolTable();
+		SymbolTable linkTable = new SymbolTable(name);
 		row.setLink(linkTable);
 		tableRowMap.put(name, row);
 		return linkTable;
@@ -31,7 +33,7 @@ public class SymbolTable {
 		List<VariableType> typeList = new ArrayList<VariableType>();
 		typeList.add(getTypeByToken(type));
 		row.setTypeList(typeList);
-		SymbolTable linkTable = new SymbolTable();
+		SymbolTable linkTable = new SymbolTable(name);
 		row.setLink(linkTable);
 		tableRowMap.put(name, row);
 		return linkTable;
@@ -74,7 +76,7 @@ public class SymbolTable {
 	}
 
 	public String toString(Map<String, SymbolTable> tableMap) {
-		String str = "" ;
+		String str = tableName + "\n" ;
 		if(tableRowMap.size() == 0){
 			str = "No Entry\n" ;
 		} else {

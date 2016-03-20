@@ -8,44 +8,51 @@ import lex.Token;
 
 public class SymbolTableHandler {
 	private SymbolTable globalTable;
-	private SymbolTable currentScopeTable;
+	private SymbolTable currentTableScope;
+	private SymbolTable functionTableScope;
 	
 	public boolean createGlobalTable() {
-		globalTable = new SymbolTable();
-		currentScopeTable = new SymbolTable();
+		globalTable = new SymbolTable("Global");
+		currentTableScope = globalTable;
+		functionTableScope = globalTable;
 		return true;
 	}
 	
 	public boolean createClassEntryAndTable(Token id) {
-		currentScopeTable = globalTable.addRowAndTable(id, VariableKind.CLASS);
+		currentTableScope = globalTable.addRowAndTable(id, VariableKind.CLASS);
+		functionTableScope = currentTableScope;
 		return true;
 	}
 	
 	public boolean createProgramTable(Token id) {
-		currentScopeTable = globalTable.addRowAndTable(id, VariableKind.FUNCTION);
+		currentTableScope = globalTable.addRowAndTable(id, VariableKind.FUNCTION);
+		functionTableScope = globalTable;
 		return true;
 	}
 	
 	public boolean createFunctionEntryAndTable(Token type, Token id) {
-		currentScopeTable = globalTable.addRowAndTable(type, id, VariableKind.FUNCTION);
+		currentTableScope = functionTableScope.addRowAndTable(type, id, VariableKind.FUNCTION);
 		return true;
 	}
 	
 	public boolean createVariableEntry(Token type, Token id, List<Token> arraySizeList) {
-		return currentScopeTable.addRow(type, id, arraySizeList, VariableKind.VARIABLE);
+		return currentTableScope.addRow(type, id, arraySizeList, VariableKind.VARIABLE);
 	}
 	
 	public boolean createParameterEntry(Token type, Token id, List<Token> arraySizeList) {
-		return currentScopeTable.addRow(type, id, arraySizeList, VariableKind.PARAMETER);
+		return currentTableScope.addRow(type, id, arraySizeList, VariableKind.PARAMETER);
 	}
 
-	public void print() {
+	public void print(SymbolTable table) {
 		Map<String, SymbolTable> tableMap = new LinkedHashMap<String, SymbolTable>();
-		System.out.println("Global Table: \n" + globalTable.toString(tableMap));
+		System.out.println("Table: " + table.toString(tableMap));
 		for(String tableName: tableMap.keySet()){
-			System.out.println("Table: " + tableName + "\n" + tableMap.get(tableName).toString(tableMap));	
+			print(tableMap.get(tableName));	
 		}
-		
+	}
+	
+	public SymbolTable getGlobalTable() {
+		return globalTable;
 	}
 
 }

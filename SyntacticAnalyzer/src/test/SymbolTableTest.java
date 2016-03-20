@@ -17,7 +17,7 @@ public class SymbolTableTest {
 	
 	@Before
 	public void setUp() throws Exception {
-		table = new SymbolTable();
+		table = new SymbolTable("Test");
 	}
 
 	@After

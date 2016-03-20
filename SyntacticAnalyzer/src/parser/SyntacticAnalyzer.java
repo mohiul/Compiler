@@ -129,7 +129,7 @@ public class SyntacticAnalyzer {
 		lookAhead = getLookAhead();
 		
 		if(prog() && match(Constants.DOLLAR)){
-			tableHandler.print();
+			tableHandler.print(tableHandler.getGlobalTable());
 			return true;
 		} else {
 			return false;			
