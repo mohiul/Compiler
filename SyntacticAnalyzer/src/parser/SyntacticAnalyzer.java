@@ -20,7 +20,7 @@ public class SyntacticAnalyzer {
 	Token lookAheadToken;
 	Token prevLookAheadToken;
 	String lookAhead;
-	Writer writer;
+	Writer errWriter;
 	Writer grammarWriter;
 	SymbolTableHandler tableHandler; 
 	
@@ -28,11 +28,11 @@ public class SyntacticAnalyzer {
 		error = false;
 		lookAhead = null;
 		lex = new LexicalAnalyzer();
-		writer = lex.getWriter();
+		errWriter = lex.getWriter();
 		grammarWriter = new BufferedWriter(
 				new OutputStreamWriter(
 				new FileOutputStream("grammars.txt"), "utf-8"));
-		tableHandler = new SymbolTableHandler();
+		tableHandler = new SymbolTableHandler(errWriter);
 	}
 	
 	public void handleFile(String file) throws IOException{
@@ -42,6 +42,7 @@ public class SyntacticAnalyzer {
 	public void closeWriter() throws IOException {
 		lex.closeWriter();
 		grammarWriter.close();
+		tableHandler.closeWriter();
 	}
 
 	public void setLexReader(Reader reader) throws IOException {
@@ -70,7 +71,7 @@ public class SyntacticAnalyzer {
 				+ " position: " 
 				+ ( lookAheadToken != null? lookAheadToken.getPositionInLine() : lex.getPosition() )
 				+ ( lookAheadToken != null? ": " + lookAheadToken.getValue(): "");
-		writer.write(errMsg + "\n");
+		errWriter.write(errMsg + "\n");
 		System.err.println(errMsg);
 	}
 
