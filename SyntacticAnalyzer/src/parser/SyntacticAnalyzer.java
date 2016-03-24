@@ -132,7 +132,7 @@ public class SyntacticAnalyzer {
 			tableHandler.print(tableHandler.getGlobalTable());
 			return true;
 		} else {
-			return false;			
+			return false;
 		}
 	}
 	

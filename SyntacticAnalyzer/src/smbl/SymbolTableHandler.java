@@ -19,28 +19,84 @@ public class SymbolTableHandler {
 	}
 	
 	public boolean createClassEntryAndTable(Token id) {
-		currentTableScope = globalTable.addRowAndTable(id, VariableKind.CLASS);
-		functionTableScope = currentTableScope;
-		return true;
+		boolean toReturn = false;
+		if(globalTable.tableRowMap.containsKey(id.getValue())) {
+			String errMsg = "Class Id: " + id.getValue() + " already exists at line: " 
+					+ id.getLineNo()  
+					+ " position: " 
+					+ id.getPositionInLine();
+			System.err.println(errMsg);
+		} else {
+			currentTableScope = globalTable.addRowAndTable(id, VariableKind.CLASS);
+			functionTableScope = currentTableScope;
+			toReturn = true;
+		}
+		return toReturn;
 	}
 	
 	public boolean createProgramTable(Token id) {
-		currentTableScope = globalTable.addRowAndTable(id, VariableKind.FUNCTION);
-		functionTableScope = globalTable;
-		return true;
+		
+		boolean toReturn = false;
+		if(globalTable.tableRowMap.containsKey(id.getValue())) {
+			String errMsg = "Function name " + id.getValue() + " already exists at line: " 
+					+ id.getLineNo()  
+					+ " position: " 
+					+ id.getPositionInLine();
+			System.err.println(errMsg);
+		} else {
+			currentTableScope = globalTable.addRowAndTable(id, VariableKind.FUNCTION);
+			functionTableScope = globalTable;
+			toReturn = true;
+		}
+		return toReturn;
 	}
 	
 	public boolean createFunctionEntryAndTable(Token type, Token id) {
-		currentTableScope = functionTableScope.addRowAndTable(type, id, VariableKind.FUNCTION);
-		return true;
+		
+		boolean toReturn = false;
+		if(functionTableScope.tableRowMap.containsKey(id.getValue())) {
+			String errMsg = "Function name " + id.getValue() + " already exists at line: " 
+					+ id.getLineNo()  
+					+ " position: " 
+					+ id.getPositionInLine();
+			System.err.println(errMsg);
+		} else {
+			currentTableScope = functionTableScope.addRowAndTable(type, id, VariableKind.FUNCTION);
+			toReturn = true;
+		}
+		return toReturn;		
 	}
 	
 	public boolean createVariableEntry(Token type, Token id, List<Token> arraySizeList) {
-		return currentTableScope.addRow(type, id, arraySizeList, VariableKind.VARIABLE);
+		
+		boolean toReturn = false;
+		if(currentTableScope.tableRowMap.containsKey(id.getValue())) {
+			String errMsg = "Variable " + id.getValue() + " already exists at line: " 
+					+ id.getLineNo()  
+					+ " position: " 
+					+ id.getPositionInLine();
+			System.err.println(errMsg);
+		} else {
+			currentTableScope.addRow(type, id, arraySizeList, VariableKind.VARIABLE);
+			toReturn = true;
+		}
+		return toReturn;
+		
 	}
 	
 	public boolean createParameterEntry(Token type, Token id, List<Token> arraySizeList) {
-		return currentTableScope.addRow(type, id, arraySizeList, VariableKind.PARAMETER);
+		boolean toReturn = false;
+		if(currentTableScope.tableRowMap.containsKey(id.getValue())) {
+			String errMsg = "Parameter " + id.getValue() + " already exists at line: " 
+					+ id.getLineNo()  
+					+ " position: " 
+					+ id.getPositionInLine();
+			System.err.println(errMsg);
+		} else {
+			currentTableScope.addRow(type, id, arraySizeList, VariableKind.PARAMETER);
+			toReturn = true;
+		}
+		return toReturn;
 	}
 
 	public void print(SymbolTable table) {

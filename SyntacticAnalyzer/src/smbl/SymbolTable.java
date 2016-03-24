@@ -15,7 +15,7 @@ public class SymbolTable {
 		this.tableName = tableName;
 		tableRowMap = new LinkedHashMap<String, SymbolTableRow>();
 	}
-
+	
 	public SymbolTable addRowAndTable(Token id, VariableKind kind) {
 		String name = id.getValue();
 		SymbolTableRow row = new SymbolTableRow(name);
