@@ -109,7 +109,7 @@ public class SyntacticAnalyzerTest {
 	
 	@Test
 	public void testClassDecls() throws IOException{
-		parser.setLexReader(Utils.getReader("class test { }; class test { }; program { };"));
+		parser.setLexReader(Utils.getReader("class test { }; class test1 { }; program { };"));
 		assertTrue(parser.parse());
 		
 	}
@@ -237,7 +237,7 @@ public class SyntacticAnalyzerTest {
 	
 	@Test
 	public void testClassIdDeclFuncDecls() throws IOException{
-		parser.setLexReader(Utils.getReader("class test { int id; float func(int array[100]){}; float func(test testId){}; }; program { };"));
+		parser.setLexReader(Utils.getReader("class test { int id; float func(int array[100]){}; float func1(test testId){}; }; program { };"));
 		assertTrue(parser.parse());
 		
 	}

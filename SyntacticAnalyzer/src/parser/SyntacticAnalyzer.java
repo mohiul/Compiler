@@ -486,7 +486,8 @@ public class SyntacticAnalyzer {
 				error = true;
 			}
 		} else if(lookAheadIsIn(lookAhead, new String[]{Constants.ID})){
-			if(match(Constants.ID, id) && varDeclStatTail(id)){
+			if(match(Constants.ID, id)
+					&& varDeclStatTail(id)){
 				grammarWriter.write("varDeclStat -> 'id' varDeclStatTail\n");
 			} else {
 				error = true;
@@ -505,7 +506,7 @@ public class SyntacticAnalyzer {
 				new String[] { }))
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{Constants.ID})){
-			if(varDeclTail(type)){
+			if(tableHandler.checkClassExists(type) && varDeclTail(type)){
 				grammarWriter.write("varDeclStatTail -> varDeclTail\n");
 			} else {
 				error = true;
@@ -1027,6 +1028,7 @@ public class SyntacticAnalyzer {
 	}
 
 	private boolean factor() throws IOException{
+		Token id = new Token();
 		if (!skipErrors(new String[] { Constants.ID,
 				Constants.NUM,
 				Constants.OPENPAR,
@@ -1036,7 +1038,9 @@ public class SyntacticAnalyzer {
 				new String[] { }))
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{ Constants.ID })){
-			if(match(Constants.ID) && factorTail()){
+			if(match(Constants.ID, id)
+					&& tableHandler.checkVariableExists(id)
+					&& factorTail()){
 				grammarWriter.write("factor -> 'id' factorTail\n");
 			} else {
 				error = true;
@@ -1221,11 +1225,14 @@ public class SyntacticAnalyzer {
 	}
 	
 	private boolean idnest() throws IOException{
+		Token id = new Token();
 		if (!skipErrors(new String[] { Constants.ID },
 				new String[] { }))
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{ Constants.ID })){
-			if(match(Constants.ID) && indiceList()){ 
+			if(match(Constants.ID, id)
+					&& tableHandler.checkVariableExists(id)
+					&& indiceList()){ 
 				grammarWriter.write("idnest -> 'id' indiceList\n");
 			} else {
 				error = true;
@@ -1351,7 +1358,7 @@ public class SyntacticAnalyzer {
 				new String[]{ }) )
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{ Constants.ID })){
-			if(match(Constants.ID, type)){ 
+			if(match(Constants.ID, type) && tableHandler.checkClassExists(type)){ 
 				grammarWriter.write("type -> 'id'\n");
 			} else {
 				error = true;

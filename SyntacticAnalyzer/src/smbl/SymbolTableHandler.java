@@ -17,6 +17,7 @@ public class SymbolTableHandler {
 	private SymbolTable globalTable;
 	private SymbolTable currentTableScope;
 	private SymbolTable functionTableScope;
+	private SymbolTable classTableScope;
 	private Writer errWriter;
 	private Writer tableWriter;
 	
@@ -51,6 +52,7 @@ public class SymbolTableHandler {
 		} else {
 			currentTableScope = globalTable.addRowAndTable(id, VariableKind.CLASS);
 			functionTableScope = currentTableScope;
+			classTableScope = currentTableScope;
 			toReturn = true;
 		}
 		return toReturn;
@@ -70,6 +72,7 @@ public class SymbolTableHandler {
 		} else {
 			currentTableScope = globalTable.addRowAndTable(id, VariableKind.FUNCTION);
 			functionTableScope = globalTable;
+			classTableScope = null;
 			toReturn = true;
 		}
 		return toReturn;
@@ -129,6 +132,48 @@ public class SymbolTableHandler {
 		return toReturn;
 	}
 
+	public boolean checkClassExists(Token type) throws IOException {
+		boolean toReturn = false;
+		if(!globalTable.tableRowMap.containsKey(type.getValue())) {
+			String errMsg = "Type " + type.getValue() + " does not exist at line: " 
+					+ type.getLineNo()  
+					+ " position: " 
+					+ type.getPositionInLine()
+					+ "\n";
+			errWriter.write(errMsg);
+			System.err.println(errMsg);
+		} else {
+			toReturn = true;
+		}
+		return toReturn;
+	}
+	
+	public boolean checkVariableExists(Token id) throws IOException {
+		boolean toReturn = false;
+		if(!currentTableScope.tableRowMap.containsKey(id.getValue()) 
+				&& !existsInClassTableScope(id.getValue())) {
+			String errMsg = "Variable " + id.getValue() + " not declaired at line: " 
+					+ id.getLineNo()  
+					+ " position: " 
+					+ id.getPositionInLine()
+					+ "\n";
+			errWriter.write(errMsg);
+			System.err.println(errMsg);				
+		} else {
+			toReturn = true;
+		}
+		return toReturn;
+	}
+	
+	private boolean existsInClassTableScope(String key) {
+		boolean exists = false;
+		if(classTableScope != null 
+				&& classTableScope.tableRowMap.containsKey(key)){
+			exists = true;
+		}
+		return exists;
+	}
+	
 	public void print(SymbolTable table) throws IOException {
 		Map<String, SymbolTable> tableMap = new LinkedHashMap<String, SymbolTable>();
 		tableWriter.write("Table: " + table.toString(tableMap) + "\n");
@@ -140,5 +185,6 @@ public class SymbolTableHandler {
 	public SymbolTable getGlobalTable() {
 		return globalTable;
 	}
+
 
 }

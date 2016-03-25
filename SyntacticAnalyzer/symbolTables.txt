@@ -18,6 +18,7 @@ Name: idx1 kind: VARIABLE type: int
 Table: findMin
 Name: array kind: PARAMETER type: int[100]
 Name: minValue kind: VARIABLE type: int
+Name: maxValue kind: VARIABLE type: int
 Name: idx kind: VARIABLE type: int
 Name: idx1 kind: VARIABLE type: int
 

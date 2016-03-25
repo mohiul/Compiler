@@ -51,13 +51,13 @@ public class SyntacticAnalyzerTest2 {
 	
 	@Test
 	public void testProg2() throws IOException{
-		parser.setLexReader(Utils.getReader("class id { }; program { } ; id id ( ) { } ;"));
+		parser.setLexReader(Utils.getReader("class id { }; program { } ; id id1 ( ) { } ;"));
 		assertTrue(parser.parse());
 	}
 	
 	@Test
 	public void testProg3() throws IOException{
-		parser.setLexReader(Utils.getReader("class id { }; program { } ; id id ( id id , id  id ) { id = id + id ; } ;"));
+		parser.setLexReader(Utils.getReader("class id { }; program { } ; id id1 ( id id1 , id id2 ) { id = id + id ; } ;"));
 		assertTrue(parser.parse());
 	}
 	

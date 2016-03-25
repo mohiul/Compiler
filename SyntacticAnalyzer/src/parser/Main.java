@@ -14,6 +14,8 @@ public class Main {
 		boolean parserReturn = parser.parse();
 		if(!parserReturn)
 			System.out.println("parserReturn: " + parserReturn);
+		else
+			System.out.println("Successfully parsed!");
 		parser.closeWriter();
 	}
 
