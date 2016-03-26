@@ -20,8 +20,10 @@ public class SymbolTableHandler {
 	private SymbolTable classTableScope;
 	private Writer errWriter;
 	private Writer tableWriter;
+	private boolean secondPass;
 	
-	public SymbolTableHandler(Writer errWriter) throws UnsupportedEncodingException, FileNotFoundException {
+	public SymbolTableHandler(boolean secondPass, Writer errWriter) throws UnsupportedEncodingException, FileNotFoundException {
+		this.secondPass = secondPass;
 		this.errWriter = errWriter;
 		tableWriter = new BufferedWriter(
 				new OutputStreamWriter(
@@ -33,15 +35,17 @@ public class SymbolTableHandler {
 	}
 
 	public boolean createGlobalTable() {
-		globalTable = new SymbolTable("Global");
-		currentTableScope = globalTable;
-		functionTableScope = globalTable;
+		if(!secondPass){
+			globalTable = new SymbolTable("Global");
+			currentTableScope = globalTable;
+			functionTableScope = globalTable;			
+		}
 		return true;
 	}
 	
 	public boolean createClassEntryAndTable(Token id) throws IOException {
 		boolean toReturn = false;
-		if(globalTable.tableRowMap.containsKey(id.getValue())) {
+		if(!secondPass && globalTable.tableRowMap.containsKey(id.getValue())) {
 			String errMsg = "Class Id: " + id.getValue() + " already exists at line: " 
 					+ id.getLineNo()  
 					+ " position: " 
@@ -61,7 +65,7 @@ public class SymbolTableHandler {
 	public boolean createProgramTable(Token id) throws IOException {
 		
 		boolean toReturn = false;
-		if(globalTable.tableRowMap.containsKey(id.getValue())) {
+		if(!secondPass && globalTable.tableRowMap.containsKey(id.getValue())) {
 			String errMsg = "Function name " + id.getValue() + " already exists at line: " 
 					+ id.getLineNo()  
 					+ " position: " 
@@ -81,7 +85,7 @@ public class SymbolTableHandler {
 	public boolean createFunctionEntryAndTable(Token type, Token id) throws IOException {
 		
 		boolean toReturn = false;
-		if(functionTableScope.tableRowMap.containsKey(id.getValue())) {
+		if(!secondPass && functionTableScope.tableRowMap.containsKey(id.getValue())) {
 			String errMsg = "Function name " + id.getValue() + " already exists at line: " 
 					+ id.getLineNo()  
 					+ " position: " 
@@ -99,7 +103,7 @@ public class SymbolTableHandler {
 	public boolean createVariableEntry(Token type, Token id, List<Token> arraySizeList) throws IOException {
 		
 		boolean toReturn = false;
-		if(currentTableScope.tableRowMap.containsKey(id.getValue())) {
+		if(!secondPass && currentTableScope.tableRowMap.containsKey(id.getValue())) {
 			String errMsg = "Variable " + id.getValue() + " already exists at line: " 
 					+ id.getLineNo()  
 					+ " position: " 
@@ -117,7 +121,7 @@ public class SymbolTableHandler {
 	
 	public boolean createParameterEntry(Token type, Token id, List<Token> arraySizeList) throws IOException {
 		boolean toReturn = false;
-		if(currentTableScope.tableRowMap.containsKey(id.getValue())) {
+		if(!secondPass && currentTableScope.tableRowMap.containsKey(id.getValue())) {
 			String errMsg = "Parameter " + id.getValue() + " already exists at line: " 
 					+ id.getLineNo()  
 					+ " position: " 
@@ -134,7 +138,7 @@ public class SymbolTableHandler {
 
 	public boolean checkClassExists(Token type) throws IOException {
 		boolean toReturn = false;
-		if(!globalTable.tableRowMap.containsKey(type.getValue())) {
+		if(secondPass && !globalTable.tableRowMap.containsKey(type.getValue())) {
 			String errMsg = "Type " + type.getValue() + " does not exist at line: " 
 					+ type.getLineNo()  
 					+ " position: " 
@@ -150,9 +154,10 @@ public class SymbolTableHandler {
 	
 	public boolean checkVariableExists(Token id) throws IOException {
 		boolean toReturn = false;
-		if(!currentTableScope.tableRowMap.containsKey(id.getValue()) 
-				&& !existsInClassTableScope(id.getValue())) {
-			String errMsg = "Variable " + id.getValue() + " not declaired at line: " 
+		if(secondPass && !currentTableScope.tableRowMap.containsKey(id.getValue()) 
+				&& !existsInClassTableScope(id.getValue())
+				&& !globalTable.tableRowMap.containsKey(id.getValue())) {
+			String errMsg = "Variable " + id.getValue() + " not declared at line: " 
 					+ id.getLineNo()  
 					+ " position: " 
 					+ id.getPositionInLine()
@@ -186,5 +191,12 @@ public class SymbolTableHandler {
 		return globalTable;
 	}
 
+	public void setSecondPass(boolean secondPass) {
+		this.secondPass = secondPass;
+	}
+
+	public void setErrWriter(Writer errWriter) {
+		this.errWriter = errWriter;
+	}
 
 }

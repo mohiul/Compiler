@@ -3,7 +3,6 @@ import java.io.BufferedWriter;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.io.Reader;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,31 +21,36 @@ public class SyntacticAnalyzer {
 	String lookAhead;
 	Writer errWriter;
 	Writer grammarWriter;
-	SymbolTableHandler tableHandler; 
+	SymbolTableHandler tableHandler;
+	String file;
+	boolean secondPass;
+	boolean handlefile;
 	
 	public SyntacticAnalyzer() throws IOException{
+		secondPass = false;
+		handlefile = false;
 		error = false;
 		lookAhead = null;
 		lex = new LexicalAnalyzer();
 		errWriter = lex.getWriter();
-		grammarWriter = new BufferedWriter(
-				new OutputStreamWriter(
-				new FileOutputStream("grammars.txt"), "utf-8"));
-		tableHandler = new SymbolTableHandler(errWriter);
+		tableHandler = new SymbolTableHandler(secondPass, errWriter);
 	}
 	
 	public void handleFile(String file) throws IOException{
+		this.file = file;
 		lex.handleFile(file);
+		handlefile = true;
 	}
 	
 	public void closeWriter() throws IOException {
 		lex.closeWriter();
-		grammarWriter.close();
+		if(grammarWriter != null)
+			grammarWriter.close();
 		tableHandler.closeWriter();
 	}
 
-	public void setLexReader(Reader reader) throws IOException {
-		lex.setReader(reader);
+	public void setLexReader(String str) throws IOException {
+		lex.setReader(str);
 		lex.readFirstChar();
 	}
 	
@@ -55,7 +59,7 @@ public class SyntacticAnalyzer {
 				|| lookAheadIsIn(lookAhead, follow)) {
 			return true;
 		} else {
-			writeError();
+			if(!secondPass) writeError();
 		    while (!lookAheadIsIn(lookAhead, first) 
 					&& !lookAheadIsIn(lookAhead, follow) && lookAheadToken != null ){
 				lookAheadToken = lex.getNextToken();
@@ -93,7 +97,7 @@ public class SyntacticAnalyzer {
 		if(strToMatch.equalsIgnoreCase(lookAhead)){
 			match = true;
 		} else {
-			writeError();
+			if(!secondPass) writeError();
 		}
 		if(lookAheadToken != null){
 			prevLookAheadToken = lookAheadToken;
@@ -126,15 +130,44 @@ public class SyntacticAnalyzer {
 	}	
 	
 	public boolean parse() throws IOException{
+		boolean toReturn = false;
+		//First Pass
 		lookAheadToken = lex.getNextToken();
 		lookAhead = getLookAhead();
 		
-		if(prog() && match(Constants.DOLLAR)){
-			tableHandler.print(tableHandler.getGlobalTable());
-			return true;
-		} else {
-			return false;
+		toReturn = prog() && match(Constants.DOLLAR);
+		
+		if(toReturn){
+			//Second Pass
+			lex.closeWriter();
+			
+			error = false;
+			lookAhead = null;
+			String strToRead = lex.getStrToRead();
+			lex = new LexicalAnalyzer();
+			if(handlefile){
+				lex.handleFile(file);
+			} else {
+				lex.setReader(strToRead);
+				lex.readFirstChar();
+			}
+			errWriter = lex.getWriter();
+			grammarWriter = new BufferedWriter(
+					new OutputStreamWriter(
+					new FileOutputStream("grammars.txt"), "utf-8"));
+			secondPass = true;
+			lex.setSecondPass(secondPass);
+			tableHandler.setSecondPass(secondPass);
+			tableHandler.setErrWriter(errWriter);
+			
+			lookAheadToken = lex.getNextToken();
+			lookAhead = getLookAhead();
+			if(prog() && match(Constants.DOLLAR)){
+				tableHandler.print(tableHandler.getGlobalTable());
+				toReturn = true;
+			}
 		}
+		return toReturn;
 	}
 	
 	private boolean prog() throws IOException{
@@ -146,7 +179,7 @@ public class SyntacticAnalyzer {
 				Constants.RESERVED_WORD_CLASS, 
 				Constants.RESERVED_WORD_PROGRAM})){
 			if( tableHandler.createGlobalTable() && classDeclList() && progBody()){
-				grammarWriter.write("prog -> classDeclList progBody\n");
+				if(secondPass) grammarWriter.write("prog -> classDeclList progBody\n");
 			} else {
 				error = true;
 			}
@@ -162,12 +195,12 @@ public class SyntacticAnalyzer {
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{ Constants.RESERVED_WORD_CLASS })){
 			if(classDecl() && classDeclList()){
-				grammarWriter.write("classDeclList -> classDecl classDeclList\n");
+				if(secondPass) grammarWriter.write("classDeclList -> classDecl classDeclList\n");
 			} else {
 				error = true;
 			}
 		}else if(lookAheadIsIn(lookAhead, new String[]{ Constants.RESERVED_WORD_PROGRAM })){
-			grammarWriter.write("classDeclList -> EPSILON\n");
+			if(secondPass) grammarWriter.write("classDeclList -> EPSILON\n");
 		} else {
 			error = true;
 		}
@@ -187,7 +220,7 @@ public class SyntacticAnalyzer {
 					&& varFuncDefs()
 					&& match(Constants.CLOSECRLBRACKET)
 					&& match(Constants.SEMICOLON)){
-				grammarWriter.write("classDecl -> 'class' 'id' '{' varFuncDefs '}'';'\n");
+				if(secondPass) grammarWriter.write("classDecl -> 'class' 'id' '{' varFuncDefs '}'';'\n");
 			} else {
 				error = true;
 			}
@@ -209,13 +242,13 @@ public class SyntacticAnalyzer {
 				Constants.ID,
 				Constants.RESERVED_WORD_INT})){
 			if(varFuncDef() && varFuncDefs()){
-				grammarWriter.write("varFuncDefs	-> varFuncDef varFuncDefs\n");
+				if(secondPass) grammarWriter.write("varFuncDefs	-> varFuncDef varFuncDefs\n");
 			} else {
 				error = true;
 			}
 		} else if(lookAheadIsIn(lookAhead, new String[]{ Constants.CLOSECRLBRACKET,
 				Constants.DOLLAR})){
-			grammarWriter.write("varFuncDefs	-> EPSILON\n");
+			if(secondPass) grammarWriter.write("varFuncDefs	-> EPSILON\n");
 		} else {
 			error = true;
 		}
@@ -237,7 +270,7 @@ public class SyntacticAnalyzer {
 			if(type(type) 
 					&& match(Constants.ID, id) 
 					&& varFuncDefTail(type, id)){
-				grammarWriter.write("varFuncDef	-> type 'id' varFuncDefTail\n");
+				if(secondPass) grammarWriter.write("varFuncDef	-> type 'id' varFuncDefTail\n");
 			} else {
 				error = true;
 			}
@@ -257,13 +290,13 @@ public class SyntacticAnalyzer {
 				Constants.OPENSQBRACKET, 
 				Constants.SEMICOLON})){
 			if(varDefTail(type, id)){
-				grammarWriter.write("varFuncDefTail -> varDefTail\n");
+				if(secondPass) grammarWriter.write("varFuncDefTail -> varDefTail\n");
 			} else {
 				error = true;
 			}
 		} else if(lookAheadIsIn(lookAhead, new String[]{ Constants.OPENPAR})) {
 			if(funcDefTail(type, id)){
-				grammarWriter.write("varFuncDefTail -> funcDefTail\n");
+				if(secondPass) grammarWriter.write("varFuncDefTail -> funcDefTail\n");
 			} else {
 				error = true;
 			}
@@ -285,7 +318,7 @@ public class SyntacticAnalyzer {
 			if(arraySizeList(arraySizeList)
 					&& match(Constants.SEMICOLON) 
 					&& tableHandler.createVariableEntry(type, id, arraySizeList)){
-				grammarWriter.write("varDefTail	-> arraySizeList ';'\n");
+				if(secondPass) grammarWriter.write("varDefTail	-> arraySizeList ';'\n");
 			} else {
 				error = true;
 			}
@@ -306,7 +339,7 @@ public class SyntacticAnalyzer {
 					&& match(Constants.CLOSEPAR)
 					&& funcBody()
 					&& match(Constants.SEMICOLON)){
-				grammarWriter.write("funcDefTail	-> '(' fParams ')' funcBody ';'\n");
+				if(secondPass) grammarWriter.write("funcDefTail	-> '(' fParams ')' funcBody ';'\n");
 			} else {
 				error = true;
 			}
@@ -327,7 +360,7 @@ public class SyntacticAnalyzer {
 					&& funcBody()
 					&& match(Constants.SEMICOLON)
 					&& funcDefList()){
-				grammarWriter.write("progBody -> 'program' funcBody ';' funcDefList\n");
+				if(secondPass) grammarWriter.write("progBody -> 'program' funcBody ';' funcDefList\n");
 			} else {
 				error = true;
 			}
@@ -347,12 +380,12 @@ public class SyntacticAnalyzer {
 				Constants.RESERVED_WORD_FLOAT,
 				Constants.ID})){
 			if(funcDef() && funcDefList()){
-				grammarWriter.write("funcDefList -> funcDef funcDefList\n");
+				if(secondPass) grammarWriter.write("funcDefList -> funcDef funcDefList\n");
 			} else {
 				error = true;
 			}
 		} else if(lookAheadIsIn(lookAhead, new String[]{ Constants.DOLLAR })){
-			grammarWriter.write("funcDefList -> EPSILON\n");
+			if(secondPass) grammarWriter.write("funcDefList -> EPSILON\n");
 		} else {
 			error = true;
 		}
@@ -369,7 +402,7 @@ public class SyntacticAnalyzer {
 				Constants.RESERVED_WORD_FLOAT,
 				Constants.ID})){
 			if(funcHead() && funcBody() && match(Constants.SEMICOLON)){
-				grammarWriter.write("funcDef -> funcHead funcBody ';'\n");
+				if(secondPass) grammarWriter.write("funcDef -> funcHead funcBody ';'\n");
 			} else {
 				error = true;
 			}
@@ -395,7 +428,7 @@ public class SyntacticAnalyzer {
 					&& tableHandler.createFunctionEntryAndTable(type, id)
 					&& fParams()
 					&& match(Constants.CLOSEPAR)){
-				grammarWriter.write("funcHead -> type 'id' '(' fParams ')'\n");
+				if(secondPass) grammarWriter.write("funcHead -> type 'id' '(' fParams ')'\n");
 			} else {
 				error = true;
 			}
@@ -413,7 +446,7 @@ public class SyntacticAnalyzer {
 			if(match(Constants.OPENCRLBRACKET) 
 					&& varDeclStatList()
 					&& match(Constants.CLOSECRLBRACKET)){
-				grammarWriter.write("funcBody -> '{' varDeclStatList '}'\n");
+				if(secondPass) grammarWriter.write("funcBody -> '{' varDeclStatList '}'\n");
 			} else {
 				error = true;
 			}
@@ -443,12 +476,12 @@ public class SyntacticAnalyzer {
 				Constants.RESERVED_WORD_FLOAT,
 				Constants.RESERVED_WORD_INT})){
 			if(varDeclStat() && varDeclStatList()){
-				grammarWriter.write("varDeclStatList -> varDeclStat varDeclStatList\n");
+				if(secondPass) grammarWriter.write("varDeclStatList -> varDeclStat varDeclStatList\n");
 			} else {
 				error = true;
 			}
 		} else if(lookAheadIsIn(lookAhead, new String[]{Constants.CLOSECRLBRACKET})){
-			grammarWriter.write("varDeclStatList -> EPSILON\n");
+			if(secondPass) grammarWriter.write("varDeclStatList -> EPSILON\n");
 		} else {
 			error = true;
 		}
@@ -471,7 +504,7 @@ public class SyntacticAnalyzer {
 		if(lookAheadIsIn(lookAhead, new String[]{Constants.RESERVED_WORD_FLOAT,
 				Constants.RESERVED_WORD_INT})){
 			if(nonidtype(type) && varDeclTail(type)){
-				grammarWriter.write("varDeclStat -> nonidtype varDeclTail\n");
+				if(secondPass) grammarWriter.write("varDeclStat -> nonidtype varDeclTail\n");
 			} else {
 				error = true;
 			}
@@ -481,14 +514,14 @@ public class SyntacticAnalyzer {
 				Constants.RESERVED_WORD_PUT,
 				Constants.RESERVED_WORD_RETURN})){
 			if(altstatement()){
-				grammarWriter.write("varDeclStat -> altstatement\n");
+				if(secondPass) grammarWriter.write("varDeclStat -> altstatement\n");
 			} else {
 				error = true;
 			}
 		} else if(lookAheadIsIn(lookAhead, new String[]{Constants.ID})){
 			if(match(Constants.ID, id)
 					&& varDeclStatTail(id)){
-				grammarWriter.write("varDeclStat -> 'id' varDeclStatTail\n");
+				if(secondPass) grammarWriter.write("varDeclStat -> 'id' varDeclStatTail\n");
 			} else {
 				error = true;
 			}
@@ -507,7 +540,7 @@ public class SyntacticAnalyzer {
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{Constants.ID})){
 			if(tableHandler.checkClassExists(type) && varDeclTail(type)){
-				grammarWriter.write("varDeclStatTail -> varDeclTail\n");
+				if(secondPass) grammarWriter.write("varDeclStatTail -> varDeclTail\n");
 			} else {
 				error = true;
 			}
@@ -515,7 +548,7 @@ public class SyntacticAnalyzer {
 				Constants.POINT,
 				Constants.EQ})){
 			if(statmentTail()){
-				grammarWriter.write("varDeclStatTail -> statmentTail\n");
+				if(secondPass) grammarWriter.write("varDeclStatTail -> statmentTail\n");
 			} else {
 				error = true;
 			}
@@ -536,7 +569,7 @@ public class SyntacticAnalyzer {
 					&& arraySizeList(arraySizeList)
 					&& match(Constants.SEMICOLON)
 					&& tableHandler.createVariableEntry(type, id, arraySizeList)){
-				grammarWriter.write("varDeclTail -> id arraySizeList ;\n");
+				if(secondPass) grammarWriter.write("varDeclTail -> id arraySizeList ;\n");
 			} else {
 				error = true;
 			}
@@ -559,7 +592,7 @@ public class SyntacticAnalyzer {
 					&& assignOp()
 					&& expr()
 					&& match(Constants.SEMICOLON)){
-				grammarWriter.write("statmentTail -> variableTail1 assignOp expr ';'\n");
+				if(secondPass) grammarWriter.write("statmentTail -> variableTail1 assignOp expr ';'\n");
 			} else {
 				error = true;
 			}
@@ -577,12 +610,12 @@ public class SyntacticAnalyzer {
 		if(lookAheadIsIn(lookAhead, new String[]{Constants.OPENSQBRACKET,
 				Constants.POINT})){
 			if(indiceList() && variableTail2()){
-				grammarWriter.write("variableTail1 -> indiceList variableTail2\n");
+				if(secondPass) grammarWriter.write("variableTail1 -> indiceList variableTail2\n");
 			} else {
 				error = true;
 			}
 		} else if(lookAheadIsIn(lookAhead, new String[]{Constants.EQ})){
-			grammarWriter.write("variableTail1 -> EPSILON\n");
+			if(secondPass) grammarWriter.write("variableTail1 -> EPSILON\n");
 		} else {
 			error = true;
 		}
@@ -595,12 +628,12 @@ public class SyntacticAnalyzer {
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{Constants.POINT})){
 			if(match(Constants.POINT) && match(Constants.ID) && indiceList() && variableTail2()){
-				grammarWriter.write("variableTail2 -> '.' 'id' indiceList variableTail2\n");
+				if(secondPass) grammarWriter.write("variableTail2 -> '.' 'id' indiceList variableTail2\n");
 			} else {
 				error = true;
 			}
 		} else if(lookAheadIsIn(lookAhead, new String[]{Constants.EQ})){
-			grammarWriter.write("variableTail2 -> EPSILON\n");
+			if(secondPass) grammarWriter.write("variableTail2 -> EPSILON\n");
 		} else {
 			error = true;
 		}
@@ -624,12 +657,12 @@ public class SyntacticAnalyzer {
 				Constants.RESERVED_WORD_RETURN,
 				Constants.ID})){
 			if(statement() && statementList()){
-				grammarWriter.write("statementList -> statement statementList\n");
+				if(secondPass) grammarWriter.write("statementList -> statement statementList\n");
 			} else {
 				error = true;
 			}
 		} else if(lookAheadIsIn(lookAhead, new String[]{Constants.CLOSECRLBRACKET})){
-			grammarWriter.write("statementList -> EPSILON\n");
+			if(secondPass) grammarWriter.write("statementList -> EPSILON\n");
 		} else {
 			error = true;
 		}
@@ -651,13 +684,13 @@ public class SyntacticAnalyzer {
 				Constants.RESERVED_WORD_PUT,
 				Constants.RESERVED_WORD_RETURN })){
 			if(altstatement()){
-				grammarWriter.write("statement -> altstatement\n");
+				if(secondPass) grammarWriter.write("statement -> altstatement\n");
 			} else {
 				error = true;
 			}
 		} else if(lookAheadIsIn(lookAhead, new String[]{Constants.ID})){
 			if(assignStat() && match(Constants.SEMICOLON)){
-				grammarWriter.write("statement -> assignStat ';'\n");
+				if(secondPass) grammarWriter.write("statement -> assignStat ';'\n");
 			} else {
 				error = true;
 			}
@@ -681,7 +714,7 @@ public class SyntacticAnalyzer {
 					&& expr()
 					&& match(Constants.CLOSEPAR)
 					&& match(Constants.SEMICOLON)){
-				grammarWriter.write("statement -> 'return' '(' expr ')' ';'\n");
+				if(secondPass) grammarWriter.write("statement -> 'return' '(' expr ')' ';'\n");
 			} else {
 				error = true;
 			}
@@ -691,7 +724,7 @@ public class SyntacticAnalyzer {
 					&& expr()
 					&& match(Constants.CLOSEPAR)
 					&& match(Constants.SEMICOLON)){
-				grammarWriter.write("statement -> 'put' '(' expr ')' ';'\n");
+				if(secondPass) grammarWriter.write("statement -> 'put' '(' expr ')' ';'\n");
 			} else {
 				error = true;
 			}
@@ -701,7 +734,7 @@ public class SyntacticAnalyzer {
 					&& variable()
 					&& match(Constants.CLOSEPAR)
 					&& match(Constants.SEMICOLON)){
-				grammarWriter.write("statement -> 'get' '(' variable ')' ';'\n");
+				if(secondPass) grammarWriter.write("statement -> 'get' '(' variable ')' ';'\n");
 			} else {
 				error = true;
 			}
@@ -715,7 +748,7 @@ public class SyntacticAnalyzer {
 					&& match(Constants.RESERVED_WORD_ELSE)
 					&& statBlock()
 					&& match(Constants.SEMICOLON)){
-				grammarWriter.write("statement -> 'if' '(' expr ')' 'then' statBlock 'else' statBlock ';'\n");
+				if(secondPass) grammarWriter.write("statement -> 'if' '(' expr ')' 'then' statBlock 'else' statBlock ';'\n");
 			} else {
 				error = true;
 			}
@@ -738,7 +771,7 @@ public class SyntacticAnalyzer {
 					&& match(Constants.CLOSEPAR)
 					&& statBlock()
 					&& match(Constants.SEMICOLON)){
-				grammarWriter.write("statement -> 'for' '(' type 'id' assignOp expr ';' arithExpr relOp arithExpr ';' assignStat ')' statBlock ';'\n");
+				if(secondPass) grammarWriter.write("statement -> 'for' '(' type 'id' assignOp expr ';' arithExpr relOp arithExpr ';' assignStat ')' statBlock ';'\n");
 			} else {
 				error = true;
 			}
@@ -754,7 +787,7 @@ public class SyntacticAnalyzer {
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{Constants.ID})){
 			if(variable() && assignOp() && expr()){
-				grammarWriter.write("assignStat -> variable assignOp expr\n");
+				if(secondPass) grammarWriter.write("assignStat -> variable assignOp expr\n");
 			} else {
 				error = true;
 			}
@@ -779,7 +812,7 @@ public class SyntacticAnalyzer {
 			if(match(Constants.OPENCRLBRACKET) 
 					&& statementList() 
 					&& match(Constants.CLOSECRLBRACKET)){
-				grammarWriter.write("statBlock -> '{' statementList '}'\n");
+				if(secondPass) grammarWriter.write("statBlock -> '{' statementList '}'\n");
 			} else {
 				error = true;
 			}
@@ -791,18 +824,14 @@ public class SyntacticAnalyzer {
 				Constants.RESERVED_WORD_RETURN,
 				Constants.ID})){
 			if(statement()){
-				grammarWriter.write("statBlock -> statement\n");
+				if(secondPass) grammarWriter.write("statBlock -> statement\n");
 			} else {
 				error = true;
 			}
 		} else if(lookAheadIsIn(lookAhead, new String[]{
 				Constants.SEMICOLON,
 				Constants.RESERVED_WORD_ELSE})){
-			if(statement()){
-				grammarWriter.write("statBlock -> EPSILON\n");
-			} else {
-				error = true;
-			}
+			if(secondPass) grammarWriter.write("statBlock -> EPSILON\n");
 		} else {
 			error = true;
 		}
@@ -825,7 +854,7 @@ public class SyntacticAnalyzer {
 				Constants.PLUS,
 				Constants.MINUS})) {
 			if(arithExpr() && relExprTail()){
-				grammarWriter.write("expr -> arithExpr relExprTail\n");
+				if(secondPass) grammarWriter.write("expr -> arithExpr relExprTail\n");
 			} else {
 				error = true;
 			}
@@ -853,14 +882,14 @@ public class SyntacticAnalyzer {
 				Constants.GT,
 				Constants.GREATEQ})) {
 			if(relOp() && arithExpr()){
-				grammarWriter.write("relExprTail -> relOp arithExpr\n");
+				if(secondPass) grammarWriter.write("relExprTail -> relOp arithExpr\n");
 			} else {
 				error = true;
 			}
 		} else if(lookAheadIsIn(lookAhead, new String[]{ Constants.SEMICOLON,
 				Constants.CLOSEPAR,
 				Constants.COMMA})) {
-			grammarWriter.write("relExprTail -> EPSILON\n");
+			if(secondPass) grammarWriter.write("relExprTail -> EPSILON\n");
 		} else {
 			error = true;
 		}
@@ -883,7 +912,7 @@ public class SyntacticAnalyzer {
 				Constants.PLUS,
 				Constants.MINUS})) {
 			if(term() && arithExprTail()){
-				grammarWriter.write("arithExpr -> term arithExprTail\n");
+				if(secondPass) grammarWriter.write("arithExpr -> term arithExprTail\n");
 			} else {
 				error = true;
 			}
@@ -912,7 +941,7 @@ public class SyntacticAnalyzer {
 				Constants.MINUS,
 				Constants.RESERVED_WORD_OR})) {
 			if(addOp() && term() && arithExprTail()){
-				grammarWriter.write("arithExprTail -> addOp term arithExprTail\n");
+				if(secondPass) grammarWriter.write("arithExprTail -> addOp term arithExprTail\n");
 			} else {
 				error = true;
 			}
@@ -926,7 +955,7 @@ public class SyntacticAnalyzer {
 				Constants.CLOSEPAR,
 				Constants.COMMA,
 				Constants.CLOSESQBRACKET})) {
-			grammarWriter.write("arithExprTail -> EPSILON\n");
+			if(secondPass) grammarWriter.write("arithExprTail -> EPSILON\n");
 		} else {
 			error = true;
 		}
@@ -939,13 +968,13 @@ public class SyntacticAnalyzer {
 				new String[] { });
 		if(lookAheadIsIn(lookAhead, new String[]{ Constants.PLUS })) {
 			if(match(Constants.PLUS)){
-				grammarWriter.write("sign -> '+'\n");
+				if(secondPass) grammarWriter.write("sign -> '+'\n");
 			} else {
 				error = true;
 			}
 		} else if(lookAheadIsIn(lookAhead, new String[]{ Constants.MINUS })) {
 			if(match(Constants.MINUS )){
-				grammarWriter.write("sign -> '-'\n");
+				if(secondPass) grammarWriter.write("sign -> '-'\n");
 			} else {
 				error = true;
 			}
@@ -971,7 +1000,7 @@ public class SyntacticAnalyzer {
 				Constants.PLUS,
 				Constants.MINUS})) {
 			if(factor() && termTail()){
-				grammarWriter.write("term -> factor termTail\n");
+				if(secondPass) grammarWriter.write("term -> factor termTail\n");
 			} else {
 				error = true;
 			}
@@ -1003,7 +1032,7 @@ public class SyntacticAnalyzer {
 				Constants.DIV,
 				Constants.RESERVED_WORD_AND})) {
 			if(multOp() && factor() && termTail()){
-				grammarWriter.write("termTail -> multOp factor termTail\n");
+				if(secondPass) grammarWriter.write("termTail -> multOp factor termTail\n");
 			} else {
 				error = true;
 			}
@@ -1020,7 +1049,7 @@ public class SyntacticAnalyzer {
 				Constants.PLUS,
 				Constants.MINUS,
 				Constants.RESERVED_WORD_OR })) {
-			grammarWriter.write("termTail -> EPSILON\n");
+			if(secondPass) grammarWriter.write("termTail -> EPSILON\n");
 		} else {
 			error = true;
 		}
@@ -1041,31 +1070,31 @@ public class SyntacticAnalyzer {
 			if(match(Constants.ID, id)
 					&& tableHandler.checkVariableExists(id)
 					&& factorTail()){
-				grammarWriter.write("factor -> 'id' factorTail\n");
+				if(secondPass) grammarWriter.write("factor -> 'id' factorTail\n");
 			} else {
 				error = true;
 			}
 		} else if(lookAheadIsIn(lookAhead, new String[]{ Constants.NUM })){
 			if(match(Constants.NUM)){
-				grammarWriter.write("factor -> 'num'\n");
+				if(secondPass) grammarWriter.write("factor -> 'num'\n");
 			} else {
 				error = true;
 			}
 		} else if(lookAheadIsIn(lookAhead, new String[]{ Constants.OPENPAR })){
 			if(match(Constants.OPENPAR) && arithExpr() && match(Constants.CLOSEPAR)){
-				grammarWriter.write("factor -> '(' arithExpr ')'\n");
+				if(secondPass) grammarWriter.write("factor -> '(' arithExpr ')'\n");
 			} else {
 				error = true;
 			}
 		} else if(lookAheadIsIn(lookAhead, new String[]{ Constants.RESERVED_WORD_NOT })){
 			if(match(Constants.RESERVED_WORD_NOT) && factor()){
-				grammarWriter.write("factor -> 'not' factor\n");
+				if(secondPass) grammarWriter.write("factor -> 'not' factor\n");
 			} else {
 				error = true;
 			}
 		} else if(lookAheadIsIn(lookAhead, new String[]{ Constants.PLUS, Constants.MINUS })){
 			if(sign() && factor()){
-				grammarWriter.write("factor -> sign factor\n");
+				if(secondPass) grammarWriter.write("factor -> sign factor\n");
 			} else {
 				error = true;
 			}
@@ -1100,19 +1129,19 @@ public class SyntacticAnalyzer {
 			if( match(Constants.POINT)
 					&& match(Constants.ID)
 					&& factorTail()){
-				grammarWriter.write("factorTail -> '.' 'id' factorTail\n");
+				if(secondPass) grammarWriter.write("factorTail -> '.' 'id' factorTail\n");
 			} else {
 				error = true;
 			}
 		} else if(lookAheadIsIn(lookAhead, new String[]{ Constants.OPENSQBRACKET })){
 			if(indice() && indiceList() && factorTail2()){
-				grammarWriter.write("factorTail -> indice indiceList factorTail2\n");
+				if(secondPass) grammarWriter.write("factorTail -> indice indiceList factorTail2\n");
 			} else {
 				error = true;
 			}
 		} else if(lookAheadIsIn(lookAhead, new String[]{ Constants.OPENPAR })){
 			if(match(Constants.OPENPAR) && aParams() && match(Constants.CLOSEPAR)){
-				grammarWriter.write("factorTail -> '(' aParams ')'\n");
+				if(secondPass) grammarWriter.write("factorTail -> '(' aParams ')'\n");
 			} else {
 				error = true;
 			}
@@ -1132,7 +1161,7 @@ public class SyntacticAnalyzer {
 				Constants.MULTIPLY,
 				Constants.DIV,
 				Constants.RESERVED_WORD_AND})) {
-			grammarWriter.write("factorTail -> EPSILON\n");
+			if(secondPass) grammarWriter.write("factorTail -> EPSILON\n");
 		} else {
 			error = true;
 		}
@@ -1162,7 +1191,7 @@ public class SyntacticAnalyzer {
 			if( match(Constants.POINT)
 					&& match(Constants.ID)
 					&& factorTail()){
-				grammarWriter.write("factorTail2 -> '.' 'id' factorTail\n");
+				if(secondPass) grammarWriter.write("factorTail2 -> '.' 'id' factorTail\n");
 			} else {
 				error = true;
 			}
@@ -1182,7 +1211,7 @@ public class SyntacticAnalyzer {
 				Constants.MULTIPLY,
 				Constants.DIV,
 				Constants.RESERVED_WORD_AND})) {
-			grammarWriter.write("factorTail2 -> EPSILON\n");
+			if(secondPass) grammarWriter.write("factorTail2 -> EPSILON\n");
 		} else {
 			error = true;
 		}
@@ -1195,7 +1224,7 @@ public class SyntacticAnalyzer {
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{ Constants.ID })){
 			if(idnest() && variableTail()){ 
-				grammarWriter.write("variable -> idnest variableTail\n");
+				if(secondPass) grammarWriter.write("variable -> idnest variableTail\n");
 			} else {
 				error = true;
 			}
@@ -1211,13 +1240,13 @@ public class SyntacticAnalyzer {
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{ Constants.POINT })){
 			if(match(Constants.POINT) && idnest() && variableTail()){ 
-				grammarWriter.write("variableTail -> '.' idnest variableTail\n");
+				if(secondPass) grammarWriter.write("variableTail -> '.' idnest variableTail\n");
 			} else {
 				error = true;
 			}
 		} else if(lookAheadIsIn(lookAhead, new String[]{ Constants.CLOSEPAR,
 				Constants.EQ})){
-			grammarWriter.write("variableTail -> EPSILON\n");
+			if(secondPass) grammarWriter.write("variableTail -> EPSILON\n");
 		} else {
 			error = true;
 		}
@@ -1233,7 +1262,7 @@ public class SyntacticAnalyzer {
 			if(match(Constants.ID, id)
 					&& tableHandler.checkVariableExists(id)
 					&& indiceList()){ 
-				grammarWriter.write("idnest -> 'id' indiceList\n");
+				if(secondPass) grammarWriter.write("idnest -> 'id' indiceList\n");
 			} else {
 				error = true;
 			}
@@ -1266,7 +1295,7 @@ public class SyntacticAnalyzer {
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{ Constants.OPENSQBRACKET })){
 			if(indice() && indiceList()){ 
-				grammarWriter.write("indiceList -> indice indiceList\n");
+				if(secondPass) grammarWriter.write("indiceList -> indice indiceList\n");
 			} else {
 				error = true;
 			}
@@ -1288,7 +1317,7 @@ public class SyntacticAnalyzer {
 				Constants.MULTIPLY,
 				Constants.DIV,
 				Constants.RESERVED_WORD_AND })){
-					grammarWriter.write("indiceList -> EPSILON\n");
+					if(secondPass) grammarWriter.write("indiceList -> EPSILON\n");
 		} else {
 			error = true;
 		}
@@ -1301,7 +1330,7 @@ public class SyntacticAnalyzer {
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{ Constants.OPENSQBRACKET })){
 			if(match(Constants.OPENSQBRACKET) && arithExpr() && match(Constants.CLOSESQBRACKET)){
-				grammarWriter.write("indice -> '[' arithExpr ']'\n");
+				if(secondPass) grammarWriter.write("indice -> '[' arithExpr ']'\n");
 			} else {
 				error = true;
 			}
@@ -1318,7 +1347,7 @@ public class SyntacticAnalyzer {
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{Constants.OPENSQBRACKET})){
 			if(arraySize(arraySize) && arraySizeList(arraySizeList)){
-				grammarWriter.write("arraySizeList -> arraySize arraySizeList\n");
+				if(secondPass) grammarWriter.write("arraySizeList -> arraySize arraySizeList\n");
 				arraySizeList.add(arraySize);
 			} else {
 				error = true;
@@ -1326,7 +1355,7 @@ public class SyntacticAnalyzer {
 		} else if(lookAheadIsIn(lookAhead, new String[]{Constants.CLOSEPAR,
 				Constants.SEMICOLON,
 				Constants.COMMA})){
-			grammarWriter.write("arraySizeList -> EPSILON\n");
+			if(secondPass) grammarWriter.write("arraySizeList -> EPSILON\n");
 		} else {
 			error = true;
 		}
@@ -1341,7 +1370,7 @@ public class SyntacticAnalyzer {
 			if(match(Constants.OPENSQBRACKET)
 					&& match(Constants.NUM, arraySize)
 					&& match(Constants.CLOSESQBRACKET)){
-				grammarWriter.write("arraySize -> '[' 'num' ']'\n");
+				if(secondPass) grammarWriter.write("arraySize -> '[' 'num' ']'\n");
 			} else {
 				error = true;
 			}
@@ -1359,14 +1388,14 @@ public class SyntacticAnalyzer {
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{ Constants.ID })){
 			if(match(Constants.ID, type) && tableHandler.checkClassExists(type)){ 
-				grammarWriter.write("type -> 'id'\n");
+				if(secondPass) grammarWriter.write("type -> 'id'\n");
 			} else {
 				error = true;
 			}
 		} else if(lookAheadIsIn(lookAhead, new String[]{Constants.RESERVED_WORD_INT,
 				Constants.RESERVED_WORD_FLOAT})){
 			if(nonidtype(type)){ 
-				grammarWriter.write("type -> nonidtype\n");
+				if(secondPass) grammarWriter.write("type -> nonidtype\n");
 			} else {
 				error = true;
 			}
@@ -1382,13 +1411,13 @@ public class SyntacticAnalyzer {
 				new String[]{ });
 		if(lookAheadIsIn(lookAhead, new String[]{Constants.RESERVED_WORD_INT})){
 			if(match(Constants.RESERVED_WORD_INT, type)){ 
-				grammarWriter.write("type -> 'int'\n");
+				if(secondPass) grammarWriter.write("type -> 'int'\n");
 			} else {
 				error = true;
 			}
 		} else if(lookAheadIsIn(lookAhead, new String[]{ Constants.RESERVED_WORD_FLOAT })){
 			if(match(Constants.RESERVED_WORD_FLOAT, type)){ 
-				grammarWriter.write("type -> 'float'\n");
+				if(secondPass) grammarWriter.write("type -> 'float'\n");
 			} else {
 				error = true;
 			}
@@ -1415,12 +1444,12 @@ public class SyntacticAnalyzer {
 					&& arraySizeList(arraySizeList)
 					&& tableHandler.createParameterEntry(type, id, arraySizeList)
 					&& fParamsTailList()){
-				grammarWriter.write("fParams -> type 'id' arraySizeList fParamsTailList\n");
+				if(secondPass) grammarWriter.write("fParams -> type 'id' arraySizeList fParamsTailList\n");
 			} else {
 				error = true;
 			}
 		} else if(lookAheadIsIn(lookAhead, new String[]{ Constants.CLOSEPAR })) {
-			grammarWriter.write("fParams -> EPSILON\n");
+			if(secondPass) grammarWriter.write("fParams -> EPSILON\n");
 		} else {
 			error = true;
 		}
@@ -1443,12 +1472,12 @@ public class SyntacticAnalyzer {
 				Constants.PLUS,
 				Constants.MINUS})) {
 			if(expr() && aParamsTails()){
-				grammarWriter.write("aParams -> expr aParamsTails\n");
+				if(secondPass) grammarWriter.write("aParams -> expr aParamsTails\n");
 			} else {
 				error = true;
 			}
 		} else if(lookAheadIsIn(lookAhead, new String[]{ Constants.CLOSEPAR })) {
-			grammarWriter.write("aParams -> EPSILON\n");
+			if(secondPass) grammarWriter.write("aParams -> EPSILON\n");
 		} else {
 			error = true;
 		}
@@ -1461,12 +1490,12 @@ public class SyntacticAnalyzer {
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{ Constants.COMMA})) {
 			if(fParamsTail() && fParamsTailList()){
-				grammarWriter.write("fParamsTailList -> fParamsTail fParamsTailList\n");
+				if(secondPass) grammarWriter.write("fParamsTailList -> fParamsTail fParamsTailList\n");
 			} else {
 				error = true;
 			}
 		} else if(lookAheadIsIn(lookAhead, new String[]{ Constants.CLOSEPAR })) {
-			grammarWriter.write("fParamsTailList -> EPSILON\n");
+			if(secondPass) grammarWriter.write("fParamsTailList -> EPSILON\n");
 		} else {
 			error = true;
 		}
@@ -1486,7 +1515,7 @@ public class SyntacticAnalyzer {
 					&& match(Constants.ID, id) 
 					&& arraySizeList(arraySizeList) 
 					&& tableHandler.createParameterEntry(type, id, arraySizeList)){
-				grammarWriter.write("fParamsTail -> ',' type 'id' arraySizeList\n");
+				if(secondPass) grammarWriter.write("fParamsTail -> ',' type 'id' arraySizeList\n");
 			} else {
 				error = true;
 			}
@@ -1502,12 +1531,12 @@ public class SyntacticAnalyzer {
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{ Constants.COMMA})) {
 			if(aParamsTail() && aParamsTails()){
-				grammarWriter.write("aParamsTails -> aParamsTail aParamsTails\n");
+				if(secondPass) grammarWriter.write("aParamsTails -> aParamsTail aParamsTails\n");
 			} else {
 				error = true;
 			}
 		} else if(lookAheadIsIn(lookAhead, new String[]{ Constants.CLOSEPAR })) {
-			grammarWriter.write("aParamsTails -> EPSILON\n");
+			if(secondPass) grammarWriter.write("aParamsTails -> EPSILON\n");
 		} else {
 			error = true;
 		}
@@ -1520,7 +1549,7 @@ public class SyntacticAnalyzer {
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{ Constants.COMMA})) {
 			if(match(Constants.COMMA) && expr()){
-				grammarWriter.write("aParamsTail -> ',' expr\n");
+				if(secondPass) grammarWriter.write("aParamsTail -> ',' expr\n");
 			} else {
 				error = true;
 			}
@@ -1535,7 +1564,7 @@ public class SyntacticAnalyzer {
 				new String[]{ });
 		if(lookAheadIsIn(lookAhead, new String[]{ Constants.EQ })) {
 			if(match(Constants.EQ)){
-				grammarWriter.write("assignOp -> '='\n");
+				if(secondPass) grammarWriter.write("assignOp -> '='\n");
 			} else {
 				error = true;
 			}
@@ -1555,37 +1584,37 @@ public class SyntacticAnalyzer {
 				new String[]{ });
 		if(lookAheadIsIn(lookAhead, new String[]{ Constants.GT })) {
 			if(match(Constants.GT)){
-				grammarWriter.write("relOp -> '>'\n");
+				if(secondPass) grammarWriter.write("relOp -> '>'\n");
 			} else {
 				error = true;
 			}
 		} else if(lookAheadIsIn(lookAhead, new String[]{ Constants.LT })) {
 			if(match(Constants.LT )){
-				grammarWriter.write("relOp -> '<'\n");
+				if(secondPass) grammarWriter.write("relOp -> '<'\n");
 			} else {
 				error = true;
 			}
 		} else if(lookAheadIsIn(lookAhead, new String[]{ Constants.LESSEQ })) {
 			if(match(Constants.LESSEQ )){
-				grammarWriter.write("relOp -> '<='\n");
+				if(secondPass) grammarWriter.write("relOp -> '<='\n");
 			} else {
 				error = true;
 			}
 		} else if(lookAheadIsIn(lookAhead, new String[]{ Constants.GREATEQ })) {
 			if(match(Constants.GREATEQ )){
-				grammarWriter.write("relOp -> '>='\n");
+				if(secondPass) grammarWriter.write("relOp -> '>='\n");
 			} else {
 				error = true;
 			}
 		} else if(lookAheadIsIn(lookAhead, new String[]{ Constants.NOTEQ })) {
 			if(match(Constants.NOTEQ )){
-				grammarWriter.write("relOp -> '<>'\n");
+				if(secondPass) grammarWriter.write("relOp -> '<>'\n");
 			} else {
 				error = true;
 			}
 		} else if(lookAheadIsIn(lookAhead, new String[]{ Constants.EQCOMP })) {
 			if(match(Constants.EQCOMP )){
-				grammarWriter.write("relOp -> '=='\n");
+				if(secondPass) grammarWriter.write("relOp -> '=='\n");
 			} else {
 				error = true;
 			}
@@ -1602,19 +1631,19 @@ public class SyntacticAnalyzer {
 				new String[]{ });
 		if(lookAheadIsIn(lookAhead, new String[]{ Constants.PLUS })) {
 			if(match(Constants.PLUS)){
-				grammarWriter.write("addOp -> '+'\n");
+				if(secondPass) grammarWriter.write("addOp -> '+'\n");
 			} else {
 				error = true;
 			}
 		} else if(lookAheadIsIn(lookAhead, new String[]{ Constants.MINUS })) {
 			if(match(Constants.MINUS )){
-				grammarWriter.write("addOp -> '-'\n");
+				if(secondPass) grammarWriter.write("addOp -> '-'\n");
 			} else {
 				error = true;
 			}
 		} else if(lookAheadIsIn(lookAhead, new String[]{ Constants.RESERVED_WORD_OR })) {
 			if(match(Constants.RESERVED_WORD_OR )){
-				grammarWriter.write("addOp -> 'or'\n");
+				if(secondPass) grammarWriter.write("addOp -> 'or'\n");
 			} else {
 				error = true;
 			}
@@ -1631,19 +1660,19 @@ public class SyntacticAnalyzer {
 				new String[]{ });
 		if(lookAheadIsIn(lookAhead, new String[]{ Constants.MULTIPLY })) {
 			if(match(Constants.MULTIPLY)){
-				grammarWriter.write("multOp -> '*'\n");
+				if(secondPass) grammarWriter.write("multOp -> '*'\n");
 			} else {
 				error = true;
 			}
 		} else if(lookAheadIsIn(lookAhead, new String[]{ Constants.DIV })) {
 			if(match(Constants.DIV )){
-				grammarWriter.write("multOp -> '/'\n");
+				if(secondPass) grammarWriter.write("multOp -> '/'\n");
 			} else {
 				error = true;
 			}
 		} else if(lookAheadIsIn(lookAhead, new String[]{ Constants.RESERVED_WORD_AND })) {
 			if(match(Constants.RESERVED_WORD_AND )){
-				grammarWriter.write("multOp -> 'and'\n");
+				if(secondPass) grammarWriter.write("multOp -> 'and'\n");
 			} else {
 				error = true;
 			}

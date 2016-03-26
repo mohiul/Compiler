@@ -12,9 +12,12 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
 
+import test.Utils;
+
 public class LexicalAnalyzer {
 	private File file;
 	private Reader reader; 
+	private String strToRead;
 	private TokenIdentifier identifier;
 	private StateTransitionTable table;
 	private int charInt;
@@ -24,8 +27,10 @@ public class LexicalAnalyzer {
 	private int state;
 	private boolean continueRead;
 	Writer writer;
+	boolean secondPass;
 	
 	public LexicalAnalyzer() throws IOException {
+		secondPass = false;
 		identifier = new TokenIdentifier();
 		table = new StateTransitionTable();
 
@@ -103,7 +108,9 @@ public class LexicalAnalyzer {
 					initialize = true;
 				} else if(tokenToReturn.getType().equalsIgnoreCase(Constants.ERR)){
 					initialize = true;
-					handleErrorMsg(tokenToReturn.getValue(), tokenToReturn.getLineNo(), prevState, position);
+					if(!secondPass){
+						handleErrorMsg(tokenToReturn.getValue(), tokenToReturn.getLineNo(), prevState, position);
+					}
 				} else {
 					break;
 				}
@@ -118,7 +125,9 @@ public class LexicalAnalyzer {
 			}
 		}
 		if(state != 0 && !table.isFinalState(state) && tokenValue.length() > 0){
-			handleErrorMsg(tokenValue.trim(), currentLine, prevState, currentPosition + 1);
+			if(!secondPass){
+				handleErrorMsg(tokenValue.trim(), currentLine, prevState, currentPosition + 1);
+			}
 		}
 		return tokenToReturn;
 	}
@@ -178,8 +187,13 @@ public class LexicalAnalyzer {
 		return reader;
 	}
 
-	public void setReader(Reader reader) {
-		this.reader = reader;
+	public void setReader(String str) {
+		this.strToRead = str;
+		this.reader = Utils.getReader(str);
+	}
+	
+	public String getStrToRead() {
+		return strToRead;
 	}
 
 	public int getLineNo() {
@@ -192,6 +206,10 @@ public class LexicalAnalyzer {
 
 	public Writer getWriter() {
 		return writer;
+	}
+
+	public void setSecondPass(boolean secondPass) {
+		this.secondPass = secondPass;
 	}
 
 }

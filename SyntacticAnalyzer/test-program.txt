@@ -30,7 +30,6 @@ class Utility
 		return (minValue);
 	};
 };
-
 program {
 	int sample[100];
 	int idx;
@@ -50,7 +49,6 @@ program {
 	put(maxValue);
 	put(minValue);
 };
-
 float randomize()
 {
 	float value;
