@@ -49,8 +49,8 @@ public class SyntacticAnalyzer {
 		tableHandler.closeWriter();
 	}
 
-	public void setLexReader(String str) throws IOException {
-		lex.setReader(str);
+	public void setLexReaderStr(String str) throws IOException {
+		lex.setReaderStr(str);
 		lex.readFirstChar();
 	}
 	
@@ -127,7 +127,7 @@ public class SyntacticAnalyzer {
 		}
 
 		return lookAhead;
-	}	
+	}
 	
 	public boolean parse() throws IOException{
 		boolean toReturn = false;
@@ -148,8 +148,7 @@ public class SyntacticAnalyzer {
 			if(handlefile){
 				lex.handleFile(file);
 			} else {
-				lex.setReader(strToRead);
-				lex.readFirstChar();
+				setLexReaderStr(strToRead);
 			}
 			errWriter = lex.getWriter();
 			grammarWriter = new BufferedWriter(
@@ -165,6 +164,8 @@ public class SyntacticAnalyzer {
 			if(prog() && match(Constants.DOLLAR)){
 				tableHandler.print(tableHandler.getGlobalTable());
 				toReturn = true;
+			} else {
+				toReturn = false;
 			}
 		}
 		return toReturn;
@@ -531,7 +532,7 @@ public class SyntacticAnalyzer {
 		return !error;
 	}
 
-	private boolean varDeclStatTail(Token type) throws IOException{
+	private boolean varDeclStatTail(Token typeOrId) throws IOException{
 		if (!skipErrors(new String[] { Constants.ID, 
 				Constants.OPENSQBRACKET,
 				Constants.POINT,
@@ -539,7 +540,7 @@ public class SyntacticAnalyzer {
 				new String[] { }))
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{Constants.ID})){
-			if(tableHandler.checkClassExists(type) && varDeclTail(type)){
+			if(tableHandler.checkClassExists(typeOrId) && varDeclTail(typeOrId)){
 				if(secondPass) grammarWriter.write("varDeclStatTail -> varDeclTail\n");
 			} else {
 				error = true;
@@ -547,7 +548,7 @@ public class SyntacticAnalyzer {
 		} else if(lookAheadIsIn(lookAhead, new String[]{Constants.OPENSQBRACKET,
 				Constants.POINT,
 				Constants.EQ})){
-			if(statmentTail()){
+			if(tableHandler.checkVariableExists(typeOrId) && statmentTail()){
 				if(secondPass) grammarWriter.write("varDeclStatTail -> statmentTail\n");
 			} else {
 				error = true;
@@ -623,11 +624,16 @@ public class SyntacticAnalyzer {
 	}
 	
 	private boolean variableTail2() throws IOException{
+		Token id = new Token();
 		if (!skipErrors(new String[] { Constants.POINT },
 				new String[] { Constants.EQ }))
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{Constants.POINT})){
-			if(match(Constants.POINT) && match(Constants.ID) && indiceList() && variableTail2()){
+			if(match(Constants.POINT) 
+					&& match(Constants.ID, id)
+					&& tableHandler.checkVariableInClassExists(id) 
+					&& indiceList() 
+					&& variableTail2()){
 				if(secondPass) grammarWriter.write("variableTail2 -> '.' 'id' indiceList variableTail2\n");
 			} else {
 				error = true;
@@ -1105,6 +1111,7 @@ public class SyntacticAnalyzer {
 	}
 	
 	private boolean factorTail() throws IOException{
+		Token id = new Token();
 		if (!skipErrors(new String[] { Constants.POINT,
 				Constants.OPENSQBRACKET,
 				Constants.OPENPAR },
@@ -1127,7 +1134,8 @@ public class SyntacticAnalyzer {
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{Constants.POINT})){
 			if( match(Constants.POINT)
-					&& match(Constants.ID)
+					&& match(Constants.ID, id)
+					&& tableHandler.checkVariableInClassExists(id)
 					&& factorTail()){
 				if(secondPass) grammarWriter.write("factorTail -> '.' 'id' factorTail\n");
 			} else {
@@ -1169,6 +1177,7 @@ public class SyntacticAnalyzer {
 	}
 	
 	private boolean factorTail2() throws IOException{
+		Token id = new Token();
 		if (!skipErrors(new String[] { Constants.POINT },
 				new String[] { Constants.LT,
 						Constants.LESSEQ,
@@ -1189,7 +1198,8 @@ public class SyntacticAnalyzer {
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{Constants.POINT})){
 			if( match(Constants.POINT)
-					&& match(Constants.ID)
+					&& match(Constants.ID, id)
+					&& tableHandler.checkVariableInClassExists(id)
 					&& factorTail()){
 				if(secondPass) grammarWriter.write("factorTail2 -> '.' 'id' factorTail\n");
 			} else {
@@ -1219,11 +1229,14 @@ public class SyntacticAnalyzer {
 	}
 
 	private boolean variable() throws IOException{
+		Token id = new Token();
 		if (!skipErrors(new String[] { Constants.ID },
 				new String[] { }))
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{ Constants.ID })){
-			if(idnest() && variableTail()){ 
+			if(idnest(id)
+					&& tableHandler.checkVariableExists(id) 
+					&& variableTail()){ 
 				if(secondPass) grammarWriter.write("variable -> idnest variableTail\n");
 			} else {
 				error = true;
@@ -1235,11 +1248,15 @@ public class SyntacticAnalyzer {
 	}
 	
 	private boolean variableTail() throws IOException{
+		Token id = new Token();
 		if (!skipErrors(new String[] { Constants.POINT },
 				new String[] { Constants.CLOSEPAR, Constants.EQ }))
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{ Constants.POINT })){
-			if(match(Constants.POINT) && idnest() && variableTail()){ 
+			if(match(Constants.POINT) 
+					&& idnest(id)
+					&& tableHandler.checkVariableInClassExists(id)
+					&& variableTail()){ 
 				if(secondPass) grammarWriter.write("variableTail -> '.' idnest variableTail\n");
 			} else {
 				error = true;
@@ -1253,14 +1270,12 @@ public class SyntacticAnalyzer {
 		return !error;
 	}
 	
-	private boolean idnest() throws IOException{
-		Token id = new Token();
+	private boolean idnest(Token id) throws IOException{
 		if (!skipErrors(new String[] { Constants.ID },
 				new String[] { }))
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{ Constants.ID })){
 			if(match(Constants.ID, id)
-					&& tableHandler.checkVariableExists(id)
 					&& indiceList()){ 
 				if(secondPass) grammarWriter.write("idnest -> 'id' indiceList\n");
 			} else {

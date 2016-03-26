@@ -18,6 +18,8 @@ public class SymbolTableHandler {
 	private SymbolTable currentTableScope;
 	private SymbolTable functionTableScope;
 	private SymbolTable classTableScope;
+	private SymbolTable currentClassVariable;
+	private String currentClassName;
 	private Writer errWriter;
 	private Writer tableWriter;
 	private boolean secondPass;
@@ -49,9 +51,8 @@ public class SymbolTableHandler {
 			String errMsg = "Class Id: " + id.getValue() + " already exists at line: " 
 					+ id.getLineNo()  
 					+ " position: " 
-					+ id.getPositionInLine()
-					+ "\n";
-			errWriter.write(errMsg);
+					+ id.getPositionInLine();
+			errWriter.write(errMsg + "\n");
 			System.err.println(errMsg);
 		} else {
 			currentTableScope = globalTable.addRowAndTable(id, VariableKind.CLASS);
@@ -69,9 +70,8 @@ public class SymbolTableHandler {
 			String errMsg = "Function name " + id.getValue() + " already exists at line: " 
 					+ id.getLineNo()  
 					+ " position: " 
-					+ id.getPositionInLine()
-					+ "\n";
-			errWriter.write(errMsg);
+					+ id.getPositionInLine();
+			errWriter.write(errMsg + "\n");
 			System.err.println(errMsg);
 		} else {
 			currentTableScope = globalTable.addRowAndTable(id, VariableKind.FUNCTION);
@@ -89,9 +89,8 @@ public class SymbolTableHandler {
 			String errMsg = "Function name " + id.getValue() + " already exists at line: " 
 					+ id.getLineNo()  
 					+ " position: " 
-					+ id.getPositionInLine()
-					+ "\n";
-			errWriter.write(errMsg);
+					+ id.getPositionInLine();
+			errWriter.write(errMsg + "\n");
 			System.err.println(errMsg);
 		} else {
 			currentTableScope = functionTableScope.addRowAndTable(type, id, VariableKind.FUNCTION);
@@ -107,9 +106,8 @@ public class SymbolTableHandler {
 			String errMsg = "Variable " + id.getValue() + " already exists at line: " 
 					+ id.getLineNo()  
 					+ " position: " 
-					+ id.getPositionInLine()
-					+ "\n";
-			errWriter.write(errMsg);
+					+ id.getPositionInLine();
+			errWriter.write(errMsg + "\n");
 			System.err.println(errMsg);
 		} else {
 			currentTableScope.addRow(type, id, arraySizeList, VariableKind.VARIABLE);
@@ -125,9 +123,8 @@ public class SymbolTableHandler {
 			String errMsg = "Parameter " + id.getValue() + " already exists at line: " 
 					+ id.getLineNo()  
 					+ " position: " 
-					+ id.getPositionInLine()
-					+ "\n";
-			errWriter.write(errMsg);
+					+ id.getPositionInLine();
+			errWriter.write(errMsg + "\n");
 			System.err.println(errMsg);
 		} else {
 			currentTableScope.addRow(type, id, arraySizeList, VariableKind.PARAMETER);
@@ -142,9 +139,8 @@ public class SymbolTableHandler {
 			String errMsg = "Type " + type.getValue() + " does not exist at line: " 
 					+ type.getLineNo()  
 					+ " position: " 
-					+ type.getPositionInLine()
-					+ "\n";
-			errWriter.write(errMsg);
+					+ type.getPositionInLine();
+			errWriter.write(errMsg + "\n");
 			System.err.println(errMsg);
 		} else {
 			toReturn = true;
@@ -156,17 +152,88 @@ public class SymbolTableHandler {
 		boolean toReturn = false;
 		if(secondPass && !currentTableScope.tableRowMap.containsKey(id.getValue()) 
 				&& !existsInClassTableScope(id.getValue())
-				&& !globalTable.tableRowMap.containsKey(id.getValue())) {
+				&& !functionInGlobalTableExists(id.getValue())) {
 			String errMsg = "Variable " + id.getValue() + " not declared at line: " 
 					+ id.getLineNo()  
 					+ " position: " 
-					+ id.getPositionInLine()
-					+ "\n";
-			errWriter.write(errMsg);
-			System.err.println(errMsg);				
+					+ id.getPositionInLine();
+			errWriter.write(errMsg + "\n");
+			System.err.println(errMsg);
+		} else {
+			toReturn = true;
+			if(secondPass){
+				SymbolTableRow row = null;
+				if(currentTableScope.tableRowMap.containsKey(id.getValue())){
+					row = currentTableScope.tableRowMap.get(id.getValue());
+				} else if(existsInClassTableScope(id.getValue())){
+					row = classTableScope.tableRowMap.get(id.getValue());
+				}
+				if(row != null){
+					String typeName = row.getTypeList().get(0).getTypeName();
+					if(globalTable.tableRowMap.containsKey(typeName)){
+						row = globalTable.tableRowMap.get(typeName);
+						if(row.getKind() == VariableKind.CLASS){
+							currentClassName = typeName;
+							currentClassVariable = globalTable.tableRowMap.get(typeName).getLink();
+						}
+					}
+				}
+			}
+		}
+		return toReturn;
+	}
+	
+	private boolean functionInGlobalTableExists(String name){
+		boolean toReturn = false;
+		if(globalTable.tableRowMap.containsKey(name)){
+			SymbolTableRow row = globalTable.tableRowMap.get(name);
+			if(row.getKind() == VariableKind.FUNCTION){
+				toReturn = true;
+			}
+		}
+		return toReturn;
+	}
+	
+	public boolean checkVariableInClassExists(Token id) throws IOException {
+		boolean toReturn = false;
+		if(secondPass){
+			if(currentClassVariable == null){
+				String errMsg = "Variable " + id.getValue() + " is not a class variable at line: " 
+						+ id.getLineNo()  
+						+ " position: " 
+						+ id.getPositionInLine();
+				errWriter.write(errMsg + "\n");
+				System.err.println(errMsg);
+			} else if(!currentClassVariable.tableRowMap.containsKey(id.getValue())) {
+				String errMsg = "Variable " + id.getValue() + " does not exist in class " + currentClassName + " at line: " 
+						+ id.getLineNo()  
+						+ " position: " 
+						+ id.getPositionInLine();
+				errWriter.write(errMsg + "\n");
+				System.err.println(errMsg);
+			} else {
+				toReturn = true;
+				if(currentClassVariable != null){
+					SymbolTableRow row = currentClassVariable.tableRowMap.get(id.getValue());
+					if(row != null){
+						String typeName = row.getTypeList().get(0).getTypeName();
+						if(globalTable.tableRowMap.containsKey(typeName)){
+							row = globalTable.tableRowMap.get(typeName);
+							if(row.getKind() == VariableKind.CLASS){
+								currentClassName = typeName;
+								currentClassVariable = globalTable.tableRowMap.get(typeName).getLink();
+							}
+						} else {
+							currentClassName = null;
+							currentClassVariable = null;					
+						}
+					}
+				}
+			} 
 		} else {
 			toReturn = true;
 		}
+		
 		return toReturn;
 	}
 	

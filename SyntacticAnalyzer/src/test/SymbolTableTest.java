@@ -2,34 +2,53 @@ package test;
 
 import static org.junit.Assert.*;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import lex.Constants;
-import lex.Token;
-import smbl.SymbolTable;
-import smbl.VariableKind;
+import parser.SyntacticAnalyzer;
 
 public class SymbolTableTest {
 	
-	private SymbolTable table;
+	private SyntacticAnalyzer parser;
+	private final ByteArrayOutputStream errContent = new ByteArrayOutputStream();
+
+	@Before
+	public void setUpStreams() {
+	    System.setErr(new PrintStream(errContent));
+	}
+
+	@After
+	public void cleanUpStreams() {
+	    System.setErr(null);
+	}
 	
 	@Before
 	public void setUp() throws Exception {
-		table = new SymbolTable("Test");
+		parser = new SyntacticAnalyzer();
 	}
 
 	@After
 	public void tearDown() throws Exception {
+		parser.closeWriter();
 	}
 
 	@Test
-	public void test() {
-		String tokenName = "testId";
-		Token token = new Token(Constants.ID, tokenName, 0, 0);
-		table.addRowAndTable(token, VariableKind.CLASS);
-		assertNotEquals(0, table.tableRowMap.size());
+	public void testProg1() throws IOException{
+		parser.setLexReaderStr("class id { }; program { }; id1 func() {};");
+		assertFalse(parser.parse());
+		assertEquals("Type id1 does not exist at line: 1 position: 28\n", errContent.toString());
 	}
-
+	
+	@Test
+	public void testProg2() throws IOException{
+		parser.setLexReaderStr("class classId { int int1; }; program { }; classId func() { classId class1; class1.id1 = 1; };");
+		assertFalse(parser.parse());
+		assertEquals("Variable id1 does not exist in class classId at line: 1 position: 83\n", errContent.toString());
+	}
+	
 }

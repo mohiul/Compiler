@@ -46,7 +46,7 @@ public class LexicalAnalyzerTest {
 	}
 
 	private void testStrWithLex(String str, String[] strArray, String[] tokenArray) {
-		lex.setReader(str);
+		lex.setReaderStr(str);
 		try {
 			lex.readFirstChar();
 			int i = 0;
@@ -66,7 +66,7 @@ public class LexicalAnalyzerTest {
 		String str = "and not or if then else for class int float get put return";
 		String strArray[] = {"and", "not", "or", "if", "then", "else", "for", 
 				"class", "int", "float", "get", "put", "return"};
-		lex.setReader(str);
+		lex.setReaderStr(str);
 		try {
 			lex.readFirstChar();
 			for(String tokenVal:strArray){
@@ -105,7 +105,7 @@ public class LexicalAnalyzerTest {
 		String str = "a123 a_123 a123_ abc abc_ ab_c ab____c ab___123__bc a123___ ABC A_Bc ABc_";
 		String strArray[] = {"a123", "a_123", "a123_", "abc", "abc_", "ab_c", "ab____c", 
 				"ab___123__bc", "a123___", "ABC", "A_Bc", "ABc_"};
-		lex.setReader(str);
+		lex.setReaderStr(str);
 		try {
 			lex.readFirstChar();
 			for(String tokenVal:strArray){
@@ -122,7 +122,7 @@ public class LexicalAnalyzerTest {
 	@Test
 	public void testInvalidId_123a() throws IOException{
 		String str = "123a";
-		lex.setReader(str);
+		lex.setReaderStr(str);
 		lex.readFirstChar();
 		Token token = lex.getNextToken();
 		assertNull(token);
@@ -132,7 +132,7 @@ public class LexicalAnalyzerTest {
 	@Test
 	public void testInvalidId__abc() throws IOException{
 		String str = "_abc";
-		lex.setReader(str);
+		lex.setReaderStr(str);
 		lex.readFirstChar();
 		Token token = lex.getNextToken();
 		assertNotNull(token);
@@ -150,7 +150,7 @@ public class LexicalAnalyzerTest {
 					+ "30.9";
 		String strArray[] = {"99.0000000003", "3.0", "0.0", "0", "0", "0", "0", "6", 
 				"44", "30.9"};
-		lex.setReader(str);
+		lex.setReaderStr(str);
 		try {
 			lex.readFirstChar();
 			for(String tokenVal:strArray){
@@ -167,7 +167,7 @@ public class LexicalAnalyzerTest {
 	@Test
 	public void testInvalidNum_77Point00() throws IOException{
 		String str = "77.00 ";
-		lex.setReader(str);
+		lex.setReaderStr(str);
 		lex.readFirstChar();
 		Token token = lex.getNextToken();
 		assertNull(token);
@@ -177,7 +177,7 @@ public class LexicalAnalyzerTest {
 	@Test
 	public void testInvalidNum_0088() throws IOException{
 		String str = "0088";
-		lex.setReader(str);
+		lex.setReaderStr(str);
 		lex.readFirstChar();
 		Token token = lex.getNextToken();
 		assertNotNull(token);
@@ -187,7 +187,7 @@ public class LexicalAnalyzerTest {
 	@Test
 	public void testInvalidNum_08() throws IOException{
 		String str = "08";
-		lex.setReader(str);
+		lex.setReaderStr(str);
 		lex.readFirstChar();
 		Token token = lex.getNextToken();
 		assertNull(token);
@@ -197,7 +197,7 @@ public class LexicalAnalyzerTest {
 	@Test
 	public void testInvalidNum_03Point9() throws IOException{
 		String str = "03.9";
-		lex.setReader(str);
+		lex.setReaderStr(str);
 		lex.readFirstChar();
 		Token token = lex.getNextToken();
 		assertNotNull(token);
@@ -207,7 +207,7 @@ public class LexicalAnalyzerTest {
 	@Test
 	public void testInvalidNum_03Point0() throws IOException{
 		String str = "03.0";
-		lex.setReader(str);
+		lex.setReaderStr(str);
 		lex.readFirstChar();
 		Token token = lex.getNextToken();
 		assertNotNull(token);
@@ -217,7 +217,7 @@ public class LexicalAnalyzerTest {
 	@Test
 	public void testInvalidNum_03Point90() throws IOException{
 		String str = "03.90";
-		lex.setReader(str);
+		lex.setReaderStr(str);
 		lex.readFirstChar();
 		Token token = lex.getNextToken();
 		assertNotNull(token);
@@ -227,7 +227,7 @@ public class LexicalAnalyzerTest {
 	@Test
 	public void testInvalidNum_1Point1Point1() throws IOException{
 		String str = "1.1.1";
-		lex.setReader(str);
+		lex.setReaderStr(str);
 		lex.readFirstChar();
 		Token token = lex.getNextToken();
 		assertNotNull(token);
@@ -237,7 +237,7 @@ public class LexicalAnalyzerTest {
 	@Test
 	public void testInvalidSymbol_Percentage() throws IOException{
 		String str = "%";
-		lex.setReader(str);
+		lex.setReaderStr(str);
 		lex.readFirstChar();
 		Token token = lex.getNextToken();
 		assertNull(token);
@@ -247,7 +247,7 @@ public class LexicalAnalyzerTest {
 	@Test
 	public void testInvalidSymbol_Dollar() throws IOException{
 		String str = "$";
-		lex.setReader(str);
+		lex.setReaderStr(str);
 		lex.readFirstChar();
 		Token token = lex.getNextToken();
 		assertNull(token);
@@ -257,7 +257,7 @@ public class LexicalAnalyzerTest {
 	@Test
 	public void testInvalidSymbol_Hash() throws IOException{
 		String str = "#";
-		lex.setReader(str);
+		lex.setReaderStr(str);
 		lex.readFirstChar();
 		Token token = lex.getNextToken();
 		assertNull(token);
@@ -267,7 +267,7 @@ public class LexicalAnalyzerTest {
 	@Test
 	public void testInvalidSymbol_atTheRate() throws IOException{
 		String str = "@";
-		lex.setReader(str);
+		lex.setReaderStr(str);
 		lex.readFirstChar();
 		Token token = lex.getNextToken();
 		assertNull(token);
@@ -277,7 +277,7 @@ public class LexicalAnalyzerTest {
 	@Test
 	public void testInvalidSymbol_ExclamationAmpersandTilda() throws IOException{
 		String str = "! & ~";
-		lex.setReader(str);
+		lex.setReaderStr(str);
 		lex.readFirstChar();
 		Token token = lex.getNextToken();
 		assertNull(token);
@@ -295,7 +295,7 @@ public class LexicalAnalyzerTest {
 				+ "bla */"
 				+ "/* bla bla\n"
 				+ "bla # */";
-		lex.setReader(str);
+		lex.setReaderStr(str);
 		lex.readFirstChar();
 		Token token = lex.getNextToken();
 		assertNull(token);
@@ -310,7 +310,7 @@ public class LexicalAnalyzerTest {
 					+"*/\n"
 					+"*/\n";
 
-		lex.setReader(str);
+		lex.setReaderStr(str);
 		lex.readFirstChar();
 		Token token = lex.getNextToken();
 		assertNotNull(token);
@@ -320,7 +320,7 @@ public class LexicalAnalyzerTest {
 	@Test
 	public void testInValidComment() throws IOException{
 		String str = "/* bla\n";
-		lex.setReader(str);
+		lex.setReaderStr(str);
 		lex.readFirstChar();
 		Token token = lex.getNextToken();
 		assertNull(token);

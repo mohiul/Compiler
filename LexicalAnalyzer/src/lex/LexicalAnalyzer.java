@@ -187,7 +187,7 @@ public class LexicalAnalyzer {
 		return reader;
 	}
 
-	public void setReader(String str) {
+	public void setReaderStr(String str) {
 		this.strToRead = str;
 		this.reader = Utils.getReader(str);
 	}
