@@ -51,4 +51,39 @@ public class SymbolTableTest {
 		assertEquals("Variable id1 does not exist in class classId at line: 1 position: 83\n", errContent.toString());
 	}
 	
+	@Test
+	public void testProg3() throws IOException{
+		parser.setLexReaderStr("class classId { int int1; }; program { }; classId func() { classId class1; class2.id1 = 1; };");
+		assertFalse(parser.parse());
+		assertEquals("Variable class2 not declared at line: 1 position: 76\n", errContent.toString());
+	}
+	
+	@Test
+	public void testProg4() throws IOException{
+		parser.setLexReaderStr("class classId { int int1; }; program { }; classId func() { classId1 class1; class1.int1 = 1; };");
+		assertFalse(parser.parse());
+		assertEquals("Type classId1 does not exist at line: 1 position: 60\n", errContent.toString());
+	}
+		
+	@Test
+	public void testProg5() throws IOException{
+		parser.setLexReaderStr("class classId { }; program { int int1; int2 = 1; };");
+		assertFalse(parser.parse());
+		assertEquals("Variable int2 not declared at line: 1 position: 40\n", errContent.toString());
+	}
+	
+	@Test
+	public void testProg6() throws IOException{
+		parser.setLexReaderStr("class classId { }; program { int int1; int1 = func1(); }; int func(){ };");
+		assertFalse(parser.parse());
+		assertEquals("Variable func1 not declared at line: 1 position: 47\n", errContent.toString());
+	}
+	
+	@Test
+	public void testProg7() throws IOException{
+		parser.setLexReaderStr("class classId { int func(){ }; }; program { classId classId1; int int1; int1 = classId1.func1(); };");
+		assertFalse(parser.parse());
+		assertEquals("Variable func1 does not exist in class classId at line: 1 position: 89\n", errContent.toString());
+	}
+	
 }
