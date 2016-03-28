@@ -339,7 +339,8 @@ public class SyntacticAnalyzer {
 					&& fParams()
 					&& match(Constants.CLOSEPAR)
 					&& funcBody()
-					&& match(Constants.SEMICOLON)){
+					&& match(Constants.SEMICOLON)
+					&& tableHandler.deleteTable(id)){
 				if(secondPass) grammarWriter.write("funcDefTail	-> '(' fParams ')' funcBody ';'\n");
 			} else {
 				error = true;
@@ -394,6 +395,7 @@ public class SyntacticAnalyzer {
 	}
 
 	private boolean funcDef() throws IOException{
+		Token funcId = new Token();
 		if (!skipErrors(new String[] { Constants.RESERVED_WORD_INT,
 				Constants.RESERVED_WORD_FLOAT,
 				Constants.ID },
@@ -402,7 +404,10 @@ public class SyntacticAnalyzer {
 		if(lookAheadIsIn(lookAhead, new String[]{Constants.RESERVED_WORD_INT,
 				Constants.RESERVED_WORD_FLOAT,
 				Constants.ID})){
-			if(funcHead() && funcBody() && match(Constants.SEMICOLON)){
+			if(funcHead(funcId) 
+					&& funcBody() 
+					&& match(Constants.SEMICOLON)
+					&& tableHandler.deleteTable(funcId)){
 				if(secondPass) grammarWriter.write("funcDef -> funcHead funcBody ';'\n");
 			} else {
 				error = true;
@@ -413,9 +418,8 @@ public class SyntacticAnalyzer {
 		return !error;
 	}
 	
-	private boolean funcHead() throws IOException{
+	private boolean funcHead(Token id) throws IOException{
 		Token type = new Token();
-		Token id = new Token();
 		if (!skipErrors(new String[] { Constants.RESERVED_WORD_INT,
 				Constants.RESERVED_WORD_FLOAT,
 				Constants.ID },
