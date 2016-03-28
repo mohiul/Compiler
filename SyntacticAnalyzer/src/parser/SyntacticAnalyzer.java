@@ -340,7 +340,7 @@ public class SyntacticAnalyzer {
 					&& match(Constants.CLOSEPAR)
 					&& funcBody()
 					&& match(Constants.SEMICOLON)
-					&& tableHandler.deleteTable(id)){
+					&& tableHandler.delFuncTable(id)){
 				if(secondPass) grammarWriter.write("funcDefTail	-> '(' fParams ')' funcBody ';'\n");
 			} else {
 				error = true;
@@ -407,7 +407,7 @@ public class SyntacticAnalyzer {
 			if(funcHead(funcId) 
 					&& funcBody() 
 					&& match(Constants.SEMICOLON)
-					&& tableHandler.deleteTable(funcId)){
+					&& tableHandler.delFuncTable(funcId)){
 				if(secondPass) grammarWriter.write("funcDef -> funcHead funcBody ';'\n");
 			} else {
 				error = true;

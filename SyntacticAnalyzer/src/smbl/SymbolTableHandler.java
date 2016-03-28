@@ -266,9 +266,8 @@ public class SymbolTableHandler {
 		this.errWriter = errWriter;
 	}
 
-	public boolean deleteTable(Token funcId) throws IOException {
+	public boolean delFuncTable(Token funcId) throws IOException {
 		if(secondPass && functionTableScope.tableRowMap.containsKey(funcId.getValue())){
-			System.out.println("Deleting table for " + funcId);
 			SymbolTableRow row = functionTableScope.tableRowMap.get(funcId.getValue());
 			print(row.getLink());
 			row.setLink(null);

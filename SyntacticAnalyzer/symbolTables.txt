@@ -1,6 +1,36 @@
+Table: findMax
+Name: array kind: PARAMETER type: int[100]
+Name: maxValue kind: VARIABLE type: int
+Name: idx kind: VARIABLE type: int
+Name: idx1 kind: VARIABLE type: int
+
+Table: findMin
+Name: array kind: PARAMETER type: int[100]
+Name: minValue kind: VARIABLE type: int
+Name: maxValue kind: VARIABLE type: int
+Name: idx kind: VARIABLE type: int
+Name: idx1 kind: VARIABLE type: int
+
+Table: randomize
+Name: value kind: VARIABLE type: float
+
 Table: Global
+Name: Utility kind: CLASS
 Name: program kind: FUNCTION
+Name: randomize kind: FUNCTION type: float
+
+Table: Utility
+Name: var1 kind: VARIABLE type: int[4][5][7][8][9][1][0]
+Name: var2 kind: VARIABLE type: float
+Name: findMax kind: FUNCTION type: int
+Name: findMin kind: FUNCTION type: int
 
 Table: program
-Name: id kind: VARIABLE type: int
+Name: sample kind: VARIABLE type: int[100]
+Name: idx kind: VARIABLE type: int
+Name: maxValue kind: VARIABLE type: int
+Name: minValue kind: VARIABLE type: int
+Name: utility kind: VARIABLE type: Utility
+Name: arrayUtility kind: VARIABLE type: Utility[2][3][6][7]
+Name: t kind: VARIABLE type: int
 
