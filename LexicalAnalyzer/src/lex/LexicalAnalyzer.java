@@ -29,7 +29,7 @@ public class LexicalAnalyzer {
 	Writer writer;
 	boolean secondPass;
 	
-	public LexicalAnalyzer() throws IOException {
+	public LexicalAnalyzer(String errorFileName) throws IOException {
 		secondPass = false;
 		identifier = new TokenIdentifier();
 		table = new StateTransitionTable();
@@ -42,7 +42,7 @@ public class LexicalAnalyzer {
 		
 		writer = new BufferedWriter(
 				new OutputStreamWriter(
-				new FileOutputStream("errors.txt"), "utf-8"));
+				new FileOutputStream(errorFileName), "utf-8"));
 	}
 	
 	public void closeWriter() throws IOException{

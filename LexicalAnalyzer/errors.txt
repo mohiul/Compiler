@@ -1,1 +1,15 @@
-Invalid Number at line: 1 position: 2: 03
+Invalid Number at line: 1 position: 6: 77.00
+Invalid Number at line: 2 position: 2: 00
+Invalid Number at line: 3 position: 2: 08
+Invalid Number at line: 4 position: 2: 03
+Invalid Number at line: 5 position: 2: 03
+Invalid Number at line: 6 position: 2: 03
+Invalid Number at line: 7 position: 4: 1.1.
+Invalid Character at line: 17 position: 1: %
+Invalid Character at line: 18 position: 1: $
+Invalid Character at line: 19 position: 1: #
+Invalid Character at line: 20 position: 1: @
+Invalid Character at line: 21 position: 1: !
+Invalid Character at line: 21 position: 3: &
+Invalid Character at line: 21 position: 5: ~
+Comment not ended at line: 38 position: 1: /* bla

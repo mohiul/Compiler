@@ -11,6 +11,9 @@ import lex.Constants;
 import lex.LexicalAnalyzer;
 import lex.Token;
 import smbl.SymbolTableHandler;
+import smbl.SymbolTableRow;
+import smbl.VariableKind;
+import smbl.VariableType;
 
 public class SyntacticAnalyzer {
 
@@ -19,21 +22,31 @@ public class SyntacticAnalyzer {
 	Token lookAheadToken;
 	Token prevLookAheadToken;
 	String lookAhead;
+	String errorFileName;
 	Writer errWriter;
+	String grammarFileName;
 	Writer grammarWriter;
+	String codeFilename;
+	Writer codeWriterData;
+	Writer codeWriterProgram;
 	SymbolTableHandler tableHandler;
 	String file;
 	boolean secondPass;
 	boolean handlefile;
+	int registerCount;
 	
-	public SyntacticAnalyzer() throws IOException{
+	public SyntacticAnalyzer(String errorFileName, String grammarFileName, String codeFileName) throws IOException{
 		secondPass = false;
 		handlefile = false;
 		error = false;
 		lookAhead = null;
-		lex = new LexicalAnalyzer();
+		lex = new LexicalAnalyzer(errorFileName);
 		errWriter = lex.getWriter();
 		tableHandler = new SymbolTableHandler(secondPass, errWriter);
+		registerCount = 0;
+		this.errorFileName = errorFileName;
+		this.grammarFileName = grammarFileName;
+		this.codeFilename = codeFileName;
 	}
 	
 	public void handleFile(String file) throws IOException{
@@ -44,9 +57,10 @@ public class SyntacticAnalyzer {
 	
 	public void closeWriter() throws IOException {
 		lex.closeWriter();
-		if(grammarWriter != null)
-			grammarWriter.close();
+		if(grammarWriter != null) grammarWriter.close();
 		tableHandler.closeWriter();
+		if(codeWriterData != null) codeWriterData.close();
+		if(codeWriterProgram != null) codeWriterProgram.close();
 	}
 
 	public void setLexReaderStr(String str) throws IOException {
@@ -144,7 +158,7 @@ public class SyntacticAnalyzer {
 			error = false;
 			lookAhead = null;
 			String strToRead = lex.getStrToRead();
-			lex = new LexicalAnalyzer();
+			lex = new LexicalAnalyzer(errorFileName);
 			if(handlefile){
 				lex.handleFile(file);
 			} else {
@@ -153,7 +167,13 @@ public class SyntacticAnalyzer {
 			errWriter = lex.getWriter();
 			grammarWriter = new BufferedWriter(
 					new OutputStreamWriter(
-					new FileOutputStream("grammars.txt"), "utf-8"));
+					new FileOutputStream(grammarFileName), "utf-8"));
+			codeWriterData = new BufferedWriter(
+					new OutputStreamWriter(
+					new FileOutputStream("codeData.txt"), "utf-8"));
+			codeWriterProgram = new BufferedWriter(
+					new OutputStreamWriter(
+					new FileOutputStream("codeProgram.txt"), "utf-8"));
 			secondPass = true;
 			lex.setSecondPass(secondPass);
 			tableHandler.setSecondPass(secondPass);
@@ -319,7 +339,10 @@ public class SyntacticAnalyzer {
 			if(arraySizeList(arraySizeList)
 					&& match(Constants.SEMICOLON) 
 					&& tableHandler.createVariableEntry(type, id, arraySizeList)){
-				if(secondPass) grammarWriter.write("varDefTail	-> arraySizeList ';'\n");
+				if(secondPass){
+					grammarWriter.write("varDefTail	-> arraySizeList ';'\n");
+					genCodeCreateVariable(id);
+				}
 			} else {
 				error = true;
 			}
@@ -574,7 +597,10 @@ public class SyntacticAnalyzer {
 					&& arraySizeList(arraySizeList)
 					&& match(Constants.SEMICOLON)
 					&& tableHandler.createVariableEntry(type, id, arraySizeList)){
-				if(secondPass) grammarWriter.write("varDeclTail -> id arraySizeList ;\n");
+				if(secondPass){
+					grammarWriter.write("varDeclTail -> id arraySizeList ;\n");
+					genCodeCreateVariable(id);
+				}
 			} else {
 				error = true;
 			}
@@ -1080,7 +1106,10 @@ public class SyntacticAnalyzer {
 			if(match(Constants.ID, id)
 					&& tableHandler.checkVariableExists(id)
 					&& factorTail()){
-				if(secondPass) grammarWriter.write("factor -> 'id' factorTail\n");
+				if(secondPass){
+					grammarWriter.write("factor -> 'id' factorTail\n");
+					genCodeLoadVariable(id);
+				}
 			} else {
 				error = true;
 			}
@@ -1699,6 +1728,57 @@ public class SyntacticAnalyzer {
 			error = true;
 		}
 		return !error;
+	}
+
+// Code Generation
+	
+	private void genCodeCreateVariable(Token id) throws IOException {
+		SymbolTableRow row = tableHandler.getVariable(id.getValue());
+		if(row.getKind() == VariableKind.VARIABLE
+				&& row.getTypeList().size() > 0){
+			VariableType varType = row.getTypeList().get(0);
+			if(varType.getTypeName().equalsIgnoreCase(Constants.RESERVED_WORD_INT)){
+				int[] dimArr = varType.getDimension();
+				if(dimArr.length == 0){
+					codeWriterData.write(row.getVarName() + "\t dw 0");
+				} else {
+					int i = 0;
+					int dim = dimArr[i++];
+					while(i < dimArr.length){
+						dim *= dimArr[i++]; 
+					}
+					codeWriterData.write(row.getVarName() + "\t res " + dim);
+				}
+			}
+		} else {
+			System.err.println("Variable " + row.getVarName() + " TypeList should be > 0");
+		}
+	}
+	
+	private void genCodeLoadVariable(Token id) throws IOException {
+		SymbolTableRow row = tableHandler.getVariable(id.getValue());
+		if(row.getKind() == VariableKind.VARIABLE
+				&& row.getTypeList().size() > 0){
+			VariableType varType = row.getTypeList().get(0);
+			if(varType.getTypeName().equalsIgnoreCase(Constants.RESERVED_WORD_INT)){
+				int[] dimArr = varType.getDimension();
+				if(dimArr.length == 0){
+					codeWriterData.write("\t lw r1, " + row.getVarName() + "(r0)");
+				} else {
+					int i = 0;
+					int dim = dimArr[i++];
+					while(i < dimArr.length){
+						dim *= dimArr[i++]; 
+					}
+					int r0 = registerCount++;
+					int r1 = registerCount++;
+					codeWriterData.write("\t addi r" + r0 + ",r" + r1 + "," + dim);
+					codeWriterData.write("\t lw r" + r1 + "," + row.getVarName() + "(r" + r0 + ")");
+				}
+			}
+		} else {
+			System.err.println("Variable " + row.getVarName() + " TypeList should be > 0");
+		}
 	}
 	
 }

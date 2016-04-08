@@ -37,7 +37,7 @@ public class LexicalAnalyzerTest {
 	
 	@Before
 	public void setUp() throws Exception {
-		lex = new LexicalAnalyzer();
+		lex = new LexicalAnalyzer("errors.txt");
 	}
 	
 	@After

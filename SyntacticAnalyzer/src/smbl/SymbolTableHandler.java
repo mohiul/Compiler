@@ -275,4 +275,9 @@ public class SymbolTableHandler {
 		return true;
 	}
 
+	public SymbolTableRow getVariable(String value) {
+		return currentTableScope.tableRowMap.get(value);
+		
+	}
+
 }

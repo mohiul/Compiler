@@ -29,7 +29,7 @@ public class SyntacticAnalyzerTest {
 	
 	@Before
 	public void setUp() throws Exception {
-		parser = new SyntacticAnalyzer();
+		parser = new SyntacticAnalyzer("errors.txt", "grammars.txt", "code.txt");
 	}
 
 	@After

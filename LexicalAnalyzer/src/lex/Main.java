@@ -11,7 +11,7 @@ public class Main {
 	private static LexicalAnalyzer lex; 
 
 	public static void main(String[] args) throws IOException {
-		lex = new LexicalAnalyzer();
+		lex = new LexicalAnalyzer("errors.txt");
 		lex.handleFile("test-program.txt");
 		Writer writer = new BufferedWriter(
 				new OutputStreamWriter(
