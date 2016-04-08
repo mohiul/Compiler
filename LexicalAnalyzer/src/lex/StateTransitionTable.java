@@ -88,7 +88,7 @@ public class StateTransitionTable {
 		stateTransitionTable.put(new Pair<Integer, Character>(2, '+'), 0);
 		stateTransitionTable.put(new Pair<Integer, Character>(2, '-'), 0);
 		stateTransitionTable.put(new Pair<Integer, Character>(2, ' '), 0);
-		finalStates.put(2, Constants.NUM);
+		finalStates.put(2, Constants.INTEGERNUM);
 
 		stateTransitionTable.put(new Pair<Integer, Character>(3, 'l'), Constants.ERR_STATE);
 		stateTransitionTable.put(new Pair<Integer, Character>(3, 'd'), Constants.ERR_STATE);
@@ -113,7 +113,7 @@ public class StateTransitionTable {
 		stateTransitionTable.put(new Pair<Integer, Character>(3, '+'), 0);
 		stateTransitionTable.put(new Pair<Integer, Character>(3, '-'), 0);
 		stateTransitionTable.put(new Pair<Integer, Character>(3, ' '), 0);
-		finalStates.put(3, Constants.NUM);
+		finalStates.put(3, Constants.INTEGERNUM);
 
 		stateTransitionTable.put(new Pair<Integer, Character>(4, 'l'), 4);
 		stateTransitionTable.put(new Pair<Integer, Character>(4, 'd'), 5);
@@ -213,7 +213,7 @@ public class StateTransitionTable {
 		stateTransitionTable.put(new Pair<Integer, Character>(7, '+'), 0);
 		stateTransitionTable.put(new Pair<Integer, Character>(7, '-'), 0);
 		stateTransitionTable.put(new Pair<Integer, Character>(7, ' '), 0);
-		finalStates.put(7, Constants.NUM);
+		finalStates.put(7, Constants.INTEGERNUM);
 		
 		stateTransitionTable.put(new Pair<Integer, Character>(8, 'l'), Constants.ERR_STATE);
 		stateTransitionTable.put(new Pair<Integer, Character>(8, 'd'), 8);
@@ -238,7 +238,7 @@ public class StateTransitionTable {
 		stateTransitionTable.put(new Pair<Integer, Character>(8, '+'), 0);
 		stateTransitionTable.put(new Pair<Integer, Character>(8, '-'), 0);
 		stateTransitionTable.put(new Pair<Integer, Character>(8, ' '), 0);
-		finalStates.put(8, Constants.NUM);
+		finalStates.put(8, Constants.INTEGERNUM);
 		
 		stateTransitionTable.put(new Pair<Integer, Character>(9, 'l'), Constants.ERR_STATE);
 		stateTransitionTable.put(new Pair<Integer, Character>(9, 'd'), 11);
@@ -287,7 +287,7 @@ public class StateTransitionTable {
 		stateTransitionTable.put(new Pair<Integer, Character>(10, '+'), 0);
 		stateTransitionTable.put(new Pair<Integer, Character>(10, '-'), 0);
 		stateTransitionTable.put(new Pair<Integer, Character>(10, ' '), 0);
-		finalStates.put(10, Constants.NUM);
+		finalStates.put(10, Constants.FLOATNUM);
 		
 		stateTransitionTable.put(new Pair<Integer, Character>(11, 'l'), Constants.ERR_STATE);
 		stateTransitionTable.put(new Pair<Integer, Character>(11, 'd'), 12);
@@ -312,7 +312,7 @@ public class StateTransitionTable {
 		stateTransitionTable.put(new Pair<Integer, Character>(11, '+'), 0);
 		stateTransitionTable.put(new Pair<Integer, Character>(11, '-'), 0);
 		stateTransitionTable.put(new Pair<Integer, Character>(11, ' '), 0);
-		finalStates.put(11, Constants.NUM);
+		finalStates.put(11, Constants.FLOATNUM);
 		
 		stateTransitionTable.put(new Pair<Integer, Character>(12, 'l'), Constants.ERR_STATE);
 		stateTransitionTable.put(new Pair<Integer, Character>(12, 'd'), 12);

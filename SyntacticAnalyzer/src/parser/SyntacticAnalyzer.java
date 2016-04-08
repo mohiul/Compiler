@@ -877,7 +877,8 @@ public class SyntacticAnalyzer {
 	private boolean expr() throws IOException{
 		if (!skipErrors(new String[] { Constants.OPENPAR,
 				Constants.ID,
-				Constants.NUM,
+				Constants.FLOATNUM,
+				Constants.INTEGERNUM,
 				Constants.RESERVED_WORD_NOT,
 				Constants.PLUS,
 				Constants.MINUS },
@@ -885,7 +886,8 @@ public class SyntacticAnalyzer {
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{ Constants.OPENPAR,
 				Constants.ID,
-				Constants.NUM,
+				Constants.FLOATNUM,
+				Constants.INTEGERNUM,
 				Constants.RESERVED_WORD_NOT,
 				Constants.PLUS,
 				Constants.MINUS})) {
@@ -935,7 +937,8 @@ public class SyntacticAnalyzer {
 	private boolean arithExpr() throws IOException{
 		if (!skipErrors(new String[] { Constants.OPENPAR,
 				Constants.ID,
-				Constants.NUM,
+				Constants.FLOATNUM,
+				Constants.INTEGERNUM,
 				Constants.RESERVED_WORD_NOT,
 				Constants.PLUS,
 				Constants.MINUS },
@@ -943,7 +946,8 @@ public class SyntacticAnalyzer {
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{ Constants.OPENPAR,
 				Constants.ID,
-				Constants.NUM,
+				Constants.FLOATNUM,
+				Constants.INTEGERNUM,
 				Constants.RESERVED_WORD_NOT,
 				Constants.PLUS,
 				Constants.MINUS})) {
@@ -1023,7 +1027,8 @@ public class SyntacticAnalyzer {
 	private boolean term() throws IOException{
 		if (!skipErrors(new String[] { Constants.OPENPAR,
 				Constants.ID,
-				Constants.NUM,
+				Constants.FLOATNUM,
+				Constants.INTEGERNUM,
 				Constants.RESERVED_WORD_NOT,
 				Constants.PLUS,
 				Constants.MINUS },
@@ -1031,7 +1036,8 @@ public class SyntacticAnalyzer {
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{ Constants.OPENPAR,
 				Constants.ID,
-				Constants.NUM,
+				Constants.FLOATNUM,
+				Constants.INTEGERNUM,
 				Constants.RESERVED_WORD_NOT,
 				Constants.PLUS,
 				Constants.MINUS})) {
@@ -1095,7 +1101,8 @@ public class SyntacticAnalyzer {
 	private boolean factor() throws IOException{
 		Token id = new Token();
 		if (!skipErrors(new String[] { Constants.ID,
-				Constants.NUM,
+				Constants.FLOATNUM,
+				Constants.INTEGERNUM,
 				Constants.OPENPAR,
 				Constants.RESERVED_WORD_NOT,
 				Constants.PLUS,
@@ -1108,14 +1115,14 @@ public class SyntacticAnalyzer {
 					&& factorTail()){
 				if(secondPass){
 					grammarWriter.write("factor -> 'id' factorTail\n");
-					genCodeLoadVariable(id);
+//					genCodeLoadVariable(id);
 				}
 			} else {
 				error = true;
 			}
-		} else if(lookAheadIsIn(lookAhead, new String[]{ Constants.NUM })){
-			if(match(Constants.NUM)){
-				if(secondPass) grammarWriter.write("factor -> 'num'\n");
+		} else if(lookAheadIsIn(lookAhead, new String[]{ Constants.INTEGERNUM, Constants.FLOATNUM })){
+			if(num()){
+				if(secondPass) grammarWriter.write("factor -> num\n");
 			} else {
 				error = true;
 			}
@@ -1416,7 +1423,7 @@ public class SyntacticAnalyzer {
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{Constants.OPENSQBRACKET})){
 			if(match(Constants.OPENSQBRACKET)
-					&& match(Constants.NUM, arraySize)
+					&& match(Constants.INTEGERNUM, arraySize)
 					&& match(Constants.CLOSESQBRACKET)){
 				if(secondPass) grammarWriter.write("arraySize -> '[' 'num' ']'\n");
 			} else {
@@ -1444,6 +1451,29 @@ public class SyntacticAnalyzer {
 				Constants.RESERVED_WORD_FLOAT})){
 			if(nonidtype(type)){ 
 				if(secondPass) grammarWriter.write("type -> nonidtype\n");
+			} else {
+				error = true;
+			}
+		} else {
+			error = true;
+		}
+		return !error;
+	}
+	
+	private boolean num() throws IOException{
+		if ( !skipErrors(new String[]{ Constants.INTEGERNUM,
+				Constants.FLOATNUM },
+				new String[]{ }) )
+			return false;
+		if(lookAheadIsIn(lookAhead, new String[]{ Constants.INTEGERNUM })){
+			if(match(Constants.INTEGERNUM)){ 
+				if(secondPass) grammarWriter.write("num -> 'intnum'\n");
+			} else {
+				error = true;
+			}
+		} else if(lookAheadIsIn(lookAhead, new String[]{Constants.FLOATNUM})){
+			if(match(Constants.FLOATNUM)){ 
+				if(secondPass) grammarWriter.write("num -> 'floatnum'\n");
 			} else {
 				error = true;
 			}
@@ -1507,7 +1537,8 @@ public class SyntacticAnalyzer {
 	private boolean aParams() throws IOException{
 		if ( !skipErrors(new String[]{ Constants.OPENPAR,
 				Constants.ID,
-				Constants.NUM,
+				Constants.INTEGERNUM,
+				Constants.FLOATNUM,
 				Constants.RESERVED_WORD_NOT,
 				Constants.PLUS,
 				Constants.MINUS }, 
@@ -1515,7 +1546,8 @@ public class SyntacticAnalyzer {
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{ Constants.OPENPAR,
 				Constants.ID,
-				Constants.NUM,
+				Constants.INTEGERNUM,
+				Constants.FLOATNUM,
 				Constants.RESERVED_WORD_NOT,
 				Constants.PLUS,
 				Constants.MINUS})) {
@@ -1740,14 +1772,14 @@ public class SyntacticAnalyzer {
 			if(varType.getTypeName().equalsIgnoreCase(Constants.RESERVED_WORD_INT)){
 				int[] dimArr = varType.getDimension();
 				if(dimArr.length == 0){
-					codeWriterData.write(row.getVarName() + "\t\tdw 0\n");
+					codeWriterData.write(row.getVarName() + "\tdw 0\n");
 				} else {
 					int i = 0;
 					int dim = dimArr[i++];
 					while(i < dimArr.length){
 						dim *= dimArr[i++]; 
 					}
-					codeWriterData.write(row.getVarName() + "\t\tres " + dim + "\n");
+					codeWriterData.write(row.getVarName() + "\tres " + dim + "\n");
 				}
 			}
 		} else {

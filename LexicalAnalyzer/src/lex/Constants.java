@@ -8,7 +8,8 @@ public class Constants {
 	public static final int MULTI_COMMENT_STATE2 = 16;
 	
 	public static final String ID = "ID";
-	public static final String NUM = "NUM";
+	public static final String INTEGERNUM = "INTEGERNUM";
+	public static final String FLOATNUM = "FLOATNUM";
 	public static final String DIV = "DIV";
 	public static final String COMMENT = "COMMENT";
 	public static final String CLOSESQBRACKET = "CLOSESQBRACKET";

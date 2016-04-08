@@ -1,0 +1,1 @@
+Variable func1 does not exist in class classId at line: 1 position: 89

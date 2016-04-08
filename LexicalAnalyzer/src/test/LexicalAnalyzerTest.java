@@ -144,19 +144,25 @@ public class LexicalAnalyzerTest {
 		String str = "99.0000000003\n"
 					+ "3.0\n"
 					+ "0.0\n"
+					+ "30.9\n"
 					+ "0\n"
 					+ "0 0 0 6\n"
-					+ "44\n"
-					+ "30.9";
-		String strArray[] = {"99.0000000003", "3.0", "0.0", "0", "0", "0", "0", "6", 
-				"44", "30.9"};
+					+ "44\n";
+		String strArray[] = {"99.0000000003", "3.0", "0.0", "30.9", "0", "0", "0", "0", "6", 
+				"44"};
 		lex.setReaderStr(str);
 		try {
 			lex.readFirstChar();
+			int i = 0;
 			for(String tokenVal:strArray){
 				Token token = lex.getNextToken();
-				assertEquals(Constants.NUM, token.getType());
-				assertEquals(tokenVal, token.getValue());			
+				if(i >= 0 && i < 4){
+					assertEquals(Constants.FLOATNUM, token.getType());
+				} else {
+					assertEquals(Constants.INTEGERNUM, token.getType());
+				}
+				assertEquals(tokenVal, token.getValue());
+				i++;
 			}
 
 		} catch (IOException e) {
