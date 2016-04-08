@@ -801,13 +801,13 @@ public class SyntacticAnalyzer {
 					&& match(Constants.SEMICOLON)
 					&& arithExpr()
 					&& relOp()
-					&& arithExpr()
+					&& expr()
 					&& match(Constants.SEMICOLON)
 					&& assignStat()
 					&& match(Constants.CLOSEPAR)
 					&& statBlock()
 					&& match(Constants.SEMICOLON)){
-				if(secondPass) grammarWriter.write("statement -> 'for' '(' type 'id' assignOp expr ';' arithExpr relOp arithExpr ';' assignStat ')' statBlock ';'\n");
+				if(secondPass) grammarWriter.write("statement -> 'for' '(' type 'id' assignOp expr ';' arithExpr relOp expr ';' assignStat ')' statBlock ';'\n");
 			} else {
 				error = true;
 			}
@@ -919,8 +919,9 @@ public class SyntacticAnalyzer {
 				Constants.EQCOMP,
 				Constants.GT,
 				Constants.GREATEQ})) {
-			if(relOp() && arithExpr()){
-				if(secondPass) grammarWriter.write("relExprTail -> relOp arithExpr\n");
+			if(relOp() && expr()){
+//			if(relOp() && arithExpr()){
+				if(secondPass) grammarWriter.write("relExprTail -> relOp expr\n");
 			} else {
 				error = true;
 			}

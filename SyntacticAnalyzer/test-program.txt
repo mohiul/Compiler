@@ -17,8 +17,8 @@ class Utility
 	};
 	int findMin(int array[100])
 	{
-		int maxValue;
 		int minValue;
+		int maxValue;
 		int idx;
 		minValue = array[100];
 		for( int idx1 = 1; idx <= 99; idx = ( idx ) + 1)
