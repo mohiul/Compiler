@@ -1740,14 +1740,14 @@ public class SyntacticAnalyzer {
 			if(varType.getTypeName().equalsIgnoreCase(Constants.RESERVED_WORD_INT)){
 				int[] dimArr = varType.getDimension();
 				if(dimArr.length == 0){
-					codeWriterData.write(row.getVarName() + "\t dw 0");
+					codeWriterData.write(row.getVarName() + "\t\tdw 0\n");
 				} else {
 					int i = 0;
 					int dim = dimArr[i++];
 					while(i < dimArr.length){
 						dim *= dimArr[i++]; 
 					}
-					codeWriterData.write(row.getVarName() + "\t res " + dim);
+					codeWriterData.write(row.getVarName() + "\t\tres " + dim + "\n");
 				}
 			}
 		} else {
@@ -1762,8 +1762,8 @@ public class SyntacticAnalyzer {
 			VariableType varType = row.getTypeList().get(0);
 			if(varType.getTypeName().equalsIgnoreCase(Constants.RESERVED_WORD_INT)){
 				int[] dimArr = varType.getDimension();
-				if(dimArr.length == 0){
-					codeWriterData.write("\t lw r1, " + row.getVarName() + "(r0)");
+				if(dimArr == null || dimArr.length == 0){
+					codeWriterProgram.write("\t\tlw r1, " + row.getVarName() + "(r0)" + "\n");
 				} else {
 					int i = 0;
 					int dim = dimArr[i++];
@@ -1772,8 +1772,8 @@ public class SyntacticAnalyzer {
 					}
 					int r0 = registerCount++;
 					int r1 = registerCount++;
-					codeWriterData.write("\t addi r" + r0 + ",r" + r1 + "," + dim);
-					codeWriterData.write("\t lw r" + r1 + "," + row.getVarName() + "(r" + r0 + ")");
+					codeWriterProgram.write("\t\taddi r" + r0 + ",r" + r1 + "," + dim + "\n");
+					codeWriterProgram.write("\t\tlw r" + r1 + "," + row.getVarName() + "(r" + r0 + ")" + "\n");
 				}
 			}
 		} else {
