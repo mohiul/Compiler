@@ -99,13 +99,13 @@ public class SyntacticAnalyzerTest2 {
 	
 	@Test
 	public void testProg10() throws IOException{
-		parser.setLexReaderStr("class id { id id1 [ 10 ][ 10 ] ;  id id2 (id id1 , id id2 ){ id id3 ; }; }; program { id id1 ; id1 = id1 ; id1 . id1 [ id1 ] [ id1 ] = id1 . id1 + id1 * id1 > id1 . id1 ; } ; id id1 ( id id1 [ 10 ] [ 10 ] , id  id2 ) { } ;");
+		parser.setLexReaderStr("class id { id id1 [ 10 ][ 10 ] ;  id id2 (id id1 , id id2 ){ id id3 ; }; }; program { id id1 ; id1 = id1 ; id1 . id1 [ id1 ] [ id1 ] = id1 . id1[1][1] + id1 * id1 > id1 . id1[1][1] ; } ; id id1 ( id id1 [ 10 ] [ 10 ] , id  id2 ) { } ;");
 		assertTrue(parser.parse());
 	}
 	
 	@Test
 	public void testProg11() throws IOException{
-		parser.setLexReaderStr("class id { id id1 [ 10 ][ 10 ] ;  id id2 (id id3 , id id4 ){ id id5 ; };  id id6 ; }; program { id id1 ; id1 = id1 ; id1 . id1 [ id1 ] [ id1 ] = id1 . id1 + id1 * id1 > id1 . id1 ; } ; id id1 ( id id1 [ 10 ] [ 10 ] , id  id2 ) { } ;");
+		parser.setLexReaderStr("class id { id id1 [ 10 ][ 10 ] ;  id id2 (id id3 , id id4 ){ id id5 ; };  id id6 ; }; program { id id1 ; id1 = id1 ; id1 . id1 [ id1 ] [ id1 ] = id1 . id1[ 10 ][ 10 ] + id1 * id1 > id1 . id1[ 10 ][ 10 ] ; } ; id id1 ( id id1 [ 10 ] [ 10 ] , id  id2 ) { } ;");
 		assertTrue(parser.parse());
 	}
 	
@@ -123,13 +123,13 @@ public class SyntacticAnalyzerTest2 {
 	
 	@Test
 	public void testProg14() throws IOException{
-		parser.setLexReaderStr("class id { id id; } ; program { id id ;  id = id ; id [ id ] = id . id [ id . id [ id ] ] . id ( id . id [ id ] )  ; } ;");
+		parser.setLexReaderStr("class id { id id; id id1[10]; } ; program { id id ; id id1[10];  id = id ; id1 [ id ] = id . id1[ id . id1[ id ] ]  ; } ;");
 		assertTrue(parser.parse());
 	}
 	
 	@Test
 	public void testProg15() throws IOException{
-		parser.setLexReaderStr("class id1 {int id;}; program { id1 id; put ( id . id [ id . id [ id ] ] ) ; } ;");
+		parser.setLexReaderStr("class id1 {int id[1];}; program { id1 id; put ( id . id [ id . id [ id ] ] ) ; } ;");
 		assertTrue(parser.parse());
 	}
 	
@@ -138,5 +138,11 @@ public class SyntacticAnalyzerTest2 {
 		parser.setLexReaderStr("program { int id; get ( id ) ; } ; ");
 		assertTrue(parser.parse());
 	}	
+	
+	@Test
+	public void testProg17() throws IOException{
+		parser.setLexReaderStr("program { int id[1][2][3]; get ( id[1][2][3] ) ; } ; ");
+		assertTrue(parser.parse());
+	}
 
 }

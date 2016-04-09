@@ -271,7 +271,7 @@ public class SyntacticAnalyzerTest {
 	
 	@Test
 	public void testIdNest() throws IOException{
-		parser.setLexReaderStr("class ArrayUtility { int var1[4][1][0][0][0][0][0];}; program { ArrayUtility arrayUtility; arrayUtility[1][1][1][1].var1[4][1][0][0][0][0][0] = 2; };");
+		parser.setLexReaderStr("class ArrayUtility { int var1[4][1][0][0][0][0][0];}; program { ArrayUtility arrayUtility[1][1][1][1]; arrayUtility[1][1][1][1].var1[4][1][0][0][0][0][0] = 2; };");
 		assertTrue(parser.parse());
 		
 	}
@@ -311,4 +311,11 @@ public class SyntacticAnalyzerTest {
 		
 	}
 
+	@Test
+	public void testProg18() throws IOException{
+		parser.setLexReaderStr("program { int id[1][2][3]; get ( id[1][2] ) ; } ; ");
+		assertFalse(parser.parse());
+		assertEquals("Variable id incorrect array dimension size at line: 1 position: 34\n", errContent.toString());
+	}
+	
 }

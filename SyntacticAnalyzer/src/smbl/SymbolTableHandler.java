@@ -147,8 +147,16 @@ public class SymbolTableHandler {
 		}
 		return toReturn;
 	}
-	
+
 	public boolean checkVariableExists(Token id) throws IOException {
+		return checkVariableExists(id, false, 0);
+	}
+	
+	public boolean checkVariableExists(Token id, int noOfDim) throws IOException {
+		return checkVariableExists(id, true, noOfDim);
+	}
+	
+	public boolean checkVariableExists(Token id, boolean checkDim, int noOfDim) throws IOException {
 		boolean toReturn = false;
 		if(secondPass && !currentTableScope.tableRowMap.containsKey(id.getValue()) 
 				&& !existsInClassTableScope(id.getValue())
@@ -169,7 +177,23 @@ public class SymbolTableHandler {
 					row = classTableScope.tableRowMap.get(id.getValue());
 				}
 				if(row != null){
-					String typeName = row.getTypeList().get(0).getTypeName();
+					VariableType type = row.getTypeList().get(0);
+					if(checkDim){
+						int dimLength = 0;
+						if(type.getDimension() != null){
+							dimLength = type.getDimension().length;
+						}
+						if(dimLength != noOfDim){
+							String errMsg = "Variable " + id.getValue() + " incorrect array dimension size at line: " 
+									+ id.getLineNo()  
+									+ " position: " 
+									+ id.getPositionInLine();
+							errWriter.write(errMsg + "\n");
+							System.err.println(errMsg);
+							toReturn = false;
+						}						
+					}
+					String typeName = type.getTypeName();
 					if(globalTable.tableRowMap.containsKey(typeName)){
 						row = globalTable.tableRowMap.get(typeName);
 						if(row.getKind() == VariableKind.CLASS){
@@ -193,11 +217,15 @@ public class SymbolTableHandler {
 		}
 		return toReturn;
 	}
-	
-	public boolean checkVariableInClassExists(Token id) throws IOException {
+//	TODO Remove parentId
+	public boolean checkVariableInClassExists(Token parentId, Token id, int noOfDim) throws IOException {
 		boolean toReturn = false;
 		if(secondPass){
 			if(currentClassVariable == null){
+				updateCurrentClassTable(parentId);
+			}
+			
+			if(currentClassVariable == null){				
 				String errMsg = "Variable " + id.getValue() + " is not a class variable at line: " 
 						+ id.getLineNo()  
 						+ " position: " 
@@ -216,7 +244,21 @@ public class SymbolTableHandler {
 				if(currentClassVariable != null){
 					SymbolTableRow row = currentClassVariable.tableRowMap.get(id.getValue());
 					if(row != null){
-						String typeName = row.getTypeList().get(0).getTypeName();
+						VariableType varType = row.getTypeList().get(0);
+						int dimLength = 0;
+						if(varType.getDimension() != null){
+							dimLength = varType.getDimension().length;
+						}
+						if(dimLength != noOfDim){
+							String errMsg = "Variable " + id.getValue() + " incorrect array dimension size at line: " 
+									+ id.getLineNo()  
+									+ " position: " 
+									+ id.getPositionInLine();
+							errWriter.write(errMsg + "\n");
+							System.err.println(errMsg);
+							toReturn = false;
+						}
+						String typeName = varType.getTypeName();
 						if(globalTable.tableRowMap.containsKey(typeName)){
 							row = globalTable.tableRowMap.get(typeName);
 							if(row.getKind() == VariableKind.CLASS){
@@ -235,6 +277,27 @@ public class SymbolTableHandler {
 		}
 		
 		return toReturn;
+	}
+
+	private void updateCurrentClassTable(Token parentId) {
+		SymbolTableRow row = null;
+		if(currentTableScope.tableRowMap.containsKey(parentId.getValue())){
+			row = currentTableScope.tableRowMap.get(parentId.getValue());
+		} else if(existsInClassTableScope(parentId.getValue())){
+			row = classTableScope.tableRowMap.get(parentId.getValue());
+		}
+		
+		if(row != null){
+			VariableType type = row.getTypeList().get(0);
+			String typeName = type.getTypeName();
+			if(globalTable.tableRowMap.containsKey(typeName)){
+				row = globalTable.tableRowMap.get(typeName);
+				if(row.getKind() == VariableKind.CLASS){
+					currentClassName = typeName;
+					currentClassVariable = globalTable.tableRowMap.get(typeName).getLink();
+				}
+			}
+		}
 	}
 	
 	private boolean existsInClassTableScope(String key) {

@@ -42,8 +42,8 @@ program {
 		get(sample[t]);
 		sample[t] = (sample[t] * randomize());
 	};
-	maxValue = utility.findMax(sample);
-	minValue = utility.findMin(sample);
+	maxValue = utility.findMax(sample[1]);
+	minValue = utility.findMin(sample[1]);
 	utility. var1[4][1][0][0][0][0][0] = 10;
 	arrayUtility[1][1][1][1].var1[4][1][0][0][0][0][0] = 2;
 	put(maxValue);
