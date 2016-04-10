@@ -345,4 +345,11 @@ public class SyntacticAnalyzerTest {
 		assertEquals("Incorrect number of parameters for function test at line: 1 position: 68\n", errContent.toString());
 	}
 	
+	@Test
+	public void testProg23() throws IOException{
+		parser.setLexReaderStr("program {int x; float y; if(x > y) then {} else{}; };");
+		assertFalse(parser.parse());
+		assertEquals("Type compatibility error for > at line: 1 position: 31\n", errContent.toString());
+	}
+	
 }

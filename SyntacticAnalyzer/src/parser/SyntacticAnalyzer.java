@@ -53,9 +53,8 @@ public class SyntacticAnalyzer {
 	Writer errWriter;
 	String grammarFileName;
 	Writer grammarWriter;
+	CodeGenerator codeGenerator;
 	String codeFilename;
-	Writer codeWriterData;
-	Writer codeWriterProgram;
 	SymbolTableHandler tableHandler;
 	String file;
 	boolean secondPass;
@@ -86,8 +85,7 @@ public class SyntacticAnalyzer {
 		lex.closeWriter();
 		if(grammarWriter != null) grammarWriter.close();
 		tableHandler.closeWriter();
-		if(codeWriterData != null) codeWriterData.close();
-		if(codeWriterProgram != null) codeWriterProgram.close();
+		if(codeGenerator != null) codeGenerator.closeWriter();
 	}
 
 	public void setLexReaderStr(String str) throws IOException {
@@ -195,12 +193,7 @@ public class SyntacticAnalyzer {
 			grammarWriter = new BufferedWriter(
 					new OutputStreamWriter(
 					new FileOutputStream(grammarFileName), "utf-8"));
-			codeWriterData = new BufferedWriter(
-					new OutputStreamWriter(
-					new FileOutputStream("codeData.txt"), "utf-8"));
-			codeWriterProgram = new BufferedWriter(
-					new OutputStreamWriter(
-					new FileOutputStream("codeProgram.txt"), "utf-8"));
+			codeGenerator = new CodeGenerator(codeFilename, tableHandler);
 			secondPass = true;
 			lex.setSecondPass(secondPass);
 			tableHandler.setSecondPass(secondPass);
@@ -384,7 +377,7 @@ public class SyntacticAnalyzer {
 							arraySizeList.getArraySizeList())){
 				if(secondPass){
 					grammarWriter.write("varDefTail	-> arraySizeList ';'\n");
-					genCodeCreateVariable(varDefTail.id);
+					codeGenerator.genCodeCreateVariable(varDefTail.id);
 				}
 			} else {
 				error = true;
@@ -653,7 +646,7 @@ public class SyntacticAnalyzer {
 					&& tableHandler.createVariableEntry(varDeclTail.type, id, arraySizeList.getArraySizeList())){
 				if(secondPass){
 					grammarWriter.write("varDeclTail -> id arraySizeList ;\n");
-					genCodeCreateVariable(id);
+					codeGenerator.genCodeCreateVariable(id);
 				}
 			} else {
 				error = true;
@@ -686,6 +679,18 @@ public class SyntacticAnalyzer {
 				if(secondPass){
 					grammarWriter.write("statmentTail -> variableTail1 assignOp expr ';'\n");
 //					TODO Create and assignment statement
+					if(variableTail1.id != null){
+						if(expression.arithExpr != null
+								&& expression.arithExpr.term != null
+								&& expression.arithExpr.term.factor != null){
+							if(expression.arithExpr.term.factor.upNum != null){
+								codeGenerator.genCodeAssignment(variableTail1.id, expression.arithExpr.term.factor.upNum);
+							} else if(expression.arithExpr.term.factor.upId != null){
+								codeGenerator.genCodeAssignment(variableTail1.id, expression.arithExpr.term.factor.upId);
+							}
+						}
+						
+					}
 				}
 			} else {
 				error = true;
@@ -925,6 +930,18 @@ public class SyntacticAnalyzer {
 					&& match(Constants.SEMICOLON)){
 				if(secondPass){
 					grammarWriter.write("statement -> 'for' '(' type 'id' assignOp expr ';' arithExpr relOp expr ';' assignStat ')' statBlock ';'\n");
+					codeGenerator.genCodeCreateVariable(id);
+					if(id != null){
+						if(expression.arithExpr != null
+								&& expression.arithExpr.term != null
+								&& expression.arithExpr.term.factor != null){
+							if(expression.arithExpr.term.factor.upNum != null){
+								codeGenerator.genCodeAssignment(id, expression.arithExpr.term.factor.upNum);
+							} else if(expression.arithExpr.term.factor.upId != null){
+								codeGenerator.genCodeAssignment(id, expression.arithExpr.term.factor.upId);
+							}
+						}
+					}
 //					TODO Generate code for for
 				}
 			} else {
@@ -950,7 +967,21 @@ public class SyntacticAnalyzer {
 					&& assignOp(assignOp) 
 					&& expr(expression)
 					&& tableHandler.checkCompatableType(variable.upType, expression.arithExpr.upType, assignOp)){
-				if(secondPass) grammarWriter.write("assignStat -> variable assignOp expr\n");
+				if(secondPass) {
+					grammarWriter.write("assignStat -> variable assignOp expr\n");
+					if(variable.upIdnest != null
+							&& variable.upIdnest.id != null){
+						if(expression.arithExpr != null
+								&& expression.arithExpr.term != null
+								&& expression.arithExpr.term.factor != null){
+							if(expression.arithExpr.term.factor.upNum != null){
+								codeGenerator.genCodeAssignment(variable.upIdnest.id, expression.arithExpr.term.factor.upNum);
+							} else if(expression.arithExpr.term.factor.upId != null){
+								codeGenerator.genCodeAssignment(variable.upIdnest.id, expression.arithExpr.term.factor.upId);
+							}
+						}
+					}
+				}
 			} else {
 				error = true;
 			}
@@ -1022,6 +1053,7 @@ public class SyntacticAnalyzer {
 			RelExprTail relExprTail = new RelExprTail();
 			expression.arithExpr = arithExpr;
 			expression.relExprTail = relExprTail;
+			relExprTail.downArithExpr = arithExpr;
 			if(arithExpr(arithExpr) && relExprTail(relExprTail)){
 				if(secondPass) grammarWriter.write("expr -> arithExpr relExprTail\n");
 			} else {
@@ -1054,8 +1086,12 @@ public class SyntacticAnalyzer {
 			Expression expression = new Expression();
 			relExprTail.relOp = relOp;
 			relExprTail.expression = expression;
-			if(relOp(relOp) && expr(expression)){
-				if(secondPass) grammarWriter.write("relExprTail -> relOp expr\n");
+			if(relOp(relOp) 
+					&& expr(expression)
+					&& tableHandler.checkCompatableType(relExprTail.downArithExpr.upType, expression.arithExpr.upType, relOp)){
+				if(secondPass){
+					grammarWriter.write("relExprTail -> relOp expr\n");
+				}
 			} else {
 				error = true;
 			}
@@ -1297,7 +1333,6 @@ public class SyntacticAnalyzer {
 					if(factorTail.upType != null && factorTail.upType.typeName != null){
 						Type.copyType(factor.upType, factorTail.upType);
 					}
-//					genCodeLoadVariable(id);
 				}
 			} else {
 				error = true;
@@ -2058,55 +2093,6 @@ public class SyntacticAnalyzer {
 			error = true;
 		}
 		return !error;
-	}
-
-// Code Generation
-	
-	private void genCodeCreateVariable(Token id) throws IOException {
-		SymbolTableRow row = tableHandler.getVariable(id.getValue());
-		if(row.getKind() == VariableKind.VARIABLE){
-			VariableType varType = row.getType();
-			if(varType.getTypeName().equalsIgnoreCase(Constants.RESERVED_WORD_INT)){
-				int[] dimArr = varType.getDimension();
-				if(dimArr.length == 0){
-					codeWriterData.write(row.getVarName() + "\tdw 0\n");
-				} else {
-					int i = 0;
-					int dim = dimArr[i++];
-					while(i < dimArr.length){
-						dim *= dimArr[i++]; 
-					}
-					codeWriterData.write(row.getVarName() + "\tres " + dim + "\n");
-				}
-			}
-		} else {
-			System.err.println("Variable " + row.getVarName() + " TypeList should be > 0");
-		}
-	}
-	
-	private void genCodeLoadVariable(Token id) throws IOException {
-		SymbolTableRow row = tableHandler.getVariable(id.getValue());
-		if(row.getKind() == VariableKind.VARIABLE){
-			VariableType varType = row.getType();
-			if(varType.getTypeName().equalsIgnoreCase(Constants.RESERVED_WORD_INT)){
-				int[] dimArr = varType.getDimension();
-				if(dimArr == null || dimArr.length == 0){
-					codeWriterProgram.write("\t\tlw r1, " + row.getVarName() + "(r0)" + "\n");
-				} else {
-					int i = 0;
-					int dim = dimArr[i++];
-					while(i < dimArr.length){
-						dim *= dimArr[i++]; 
-					}
-					int r0 = registerCount++;
-					int r1 = registerCount++;
-					codeWriterProgram.write("\t\taddi r" + r0 + ",r" + r1 + "," + dim + "\n");
-					codeWriterProgram.write("\t\tlw r" + r1 + "," + row.getVarName() + "(r" + r0 + ")" + "\n");
-				}
-			}
-		} else {
-			System.err.println("Variable " + row.getVarName() + " TypeList should be > 0");
-		}
 	}
 	
 }
