@@ -937,7 +937,9 @@ public class SyntacticAnalyzer {
 						if(expression.arithExpr != null
 								&& expression.arithExpr.term != null
 								&& expression.arithExpr.term.factor != null){
-							if(expression.arithExpr.term.factor.upNum != null){
+							if(expression.arithExpr.term.factor.tempVar != null){
+								codeGenerator.genCodeAssignment(id, expression.arithExpr.term.factor.tempVar);
+							} else if(expression.arithExpr.term.factor.upNum != null){
 								codeGenerator.genCodeAssignment(id, expression.arithExpr.term.factor.upNum);
 							} else if(expression.arithExpr.term.factor.upId != null){
 								codeGenerator.genCodeAssignment(id, expression.arithExpr.term.factor.upId);
@@ -976,7 +978,9 @@ public class SyntacticAnalyzer {
 						if(expression.arithExpr != null
 								&& expression.arithExpr.term != null
 								&& expression.arithExpr.term.factor != null){
-							if(expression.arithExpr.term.factor.upNum != null){
+							if(expression.arithExpr.term.factor.tempVar != null){
+								codeGenerator.genCodeAssignment(variable.upIdnest.id, expression.arithExpr.term.factor.tempVar);
+							} else if(expression.arithExpr.term.factor.upNum != null){
 								codeGenerator.genCodeAssignment(variable.upIdnest.id, expression.arithExpr.term.factor.upNum);
 							} else if(expression.arithExpr.term.factor.upId != null){
 								codeGenerator.genCodeAssignment(variable.upIdnest.id, expression.arithExpr.term.factor.upId);
@@ -1093,6 +1097,21 @@ public class SyntacticAnalyzer {
 					&& tableHandler.checkCompatableType(relExprTail.downArithExpr.upType, expression.arithExpr.upType, relOp)){
 				if(secondPass){
 					grammarWriter.write("relExprTail -> relOp expr\n");
+					Factor f1 = null;
+					Factor f2 = null;
+					if(relExprTail.downArithExpr != null
+							&& relExprTail.downArithExpr.term != null
+							&& relExprTail.downArithExpr.term.factor != null){
+						f1 = relExprTail.downArithExpr.term.factor;
+					}
+					if(expression.arithExpr != null
+							&& expression.arithExpr.term != null
+							&& expression.arithExpr.term.factor != null){
+						f2 = expression.arithExpr.term.factor;
+					}
+					if(f1!= null && f2 != null){
+						codeGenerator.genCodeRelOperation(f1, f2, relOp);
+					}
 				}
 			} else {
 				error = true;
@@ -1394,13 +1413,16 @@ public class SyntacticAnalyzer {
 		} else if(lookAheadIsIn(lookAhead, new String[]{ Constants.RESERVED_WORD_NOT })){
 			Factor factor1 = new Factor();
 			factor.factor = factor1;
-			if(match(Constants.RESERVED_WORD_NOT) && factor(factor1)){
+			Token not = new Token();
+			if(match(Constants.RESERVED_WORD_NOT, not) && factor(factor1)){
 				if(secondPass){
 					grammarWriter.write("factor -> 'not' factor\n");
 					if(factor.upType == null) factor.upType = new Type();
 					if(factor1.upType == null) factor1.upType = new Type();
 					Type.copyType(factor.upType, factor1.upType);
 //					TODO Generate code for Not factor
+					codeGenerator.genCodeNotOperation(factor1, not);
+					factor.tempVar = factor1.tempVar;
 				}
 			} else {
 				error = true;

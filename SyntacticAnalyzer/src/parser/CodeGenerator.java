@@ -27,6 +27,8 @@ public class CodeGenerator {
 	private String codeProgramFileName;
 	private String codeFileName;
 	int tempVarCount;
+	int zeroCount;
+	int endandCount;
 	
 	public CodeGenerator(String codeFilename, 
 			SymbolTableHandler tableHandler) throws UnsupportedEncodingException, FileNotFoundException {
@@ -39,6 +41,8 @@ public class CodeGenerator {
 		codeWriterProgram = new BufferedWriter(new OutputStreamWriter(
 				new FileOutputStream(codeProgramFileName), "utf-8"));
 		tempVarCount = 0;
+		zeroCount = 0;
+		endandCount = 0;
 	}
 
 	public void closeWriter() throws IOException {
@@ -100,6 +104,14 @@ public class CodeGenerator {
 		
 	}
 
+	public void genCodeNotOperation(Factor f1, Token not) throws IOException {
+		loadFactorInReg(f1, "r1");
+		if(not.getValue().equalsIgnoreCase(Constants.RESERVED_WORD_NOT)){
+			codeWriterProgram.write("\t not \t r3,r1\n");
+			conditionalBranch(createTempVar(f1, new Factor()));
+		}
+	}
+
 	public void genCodeOperation(Factor f1, Factor f2, Token op) throws IOException {
 		loadFactorInReg(f1, "r1");
 		loadFactorInReg(f2, "r2");		
@@ -112,6 +124,68 @@ public class CodeGenerator {
 			codeWriterProgram.write("\t mul \t r3,r1,r2\n");
 		} else if(op.getType().equalsIgnoreCase(Constants.DIV)){
 			codeWriterProgram.write("\t div \t r3,r1,r2\n");
+		} else if(op.getType().equalsIgnoreCase(Constants.DIV)){
+			codeWriterProgram.write("\t div \t r3,r1,r2\n");
+		} else if(op.getValue().equalsIgnoreCase(Constants.RESERVED_WORD_AND)){
+			codeWriterProgram.write("\t and \t r3,r1,r2\n");
+		} else if(op.getValue().equalsIgnoreCase(Constants.RESERVED_WORD_OR)){
+			codeWriterProgram.write("\t or \t r3,r1,r2\n");
+		}
+		
+		String tempVar = createTempVar(f1, f2);
+		if(op.getValue().equalsIgnoreCase(Constants.RESERVED_WORD_AND)
+				|| op.getValue().equalsIgnoreCase(Constants.RESERVED_WORD_OR)){
+			conditionalBranch(tempVar);
+		} else {
+			codeWriterProgram.write("\t sw \t " + tempVar + "(r0),r3\n");			
+		}
+		codeWriterProgram.write("\n");
+	}
+
+	private void conditionalBranch(String tempVar) throws IOException {
+		String zero = "zero" + (zeroCount++);
+		codeWriterProgram.write("\t bz \t r3," + zero + "\n");
+		codeWriterProgram.write("\t addi \t r1,r0,1\n");
+		codeWriterProgram.write("\t sw \t " + tempVar + "(r0),r1\n");
+		String endand = "endand" + (endandCount++);
+		codeWriterProgram.write("\t j \t " + endand + "\n");
+		codeWriterProgram.write(zero + "\t sw \t " + tempVar + "(r0), r0\n");
+		codeWriterProgram.write(endand + "\n");
+	}
+	
+	private String createTempVar(Factor f1, Factor f2) throws IOException {
+		String tempVar = null;
+		if(f1.tempVar == null && f2.tempVar == null){
+			tempVar = "t" + tempVarCount++;
+			Token tempT = new Token();
+			tempT.setValue(tempVar);
+			tempT.setType(Constants.ID);
+			f1.tempVar = tempT;
+			codeWriterData.write(tempVar + "\t dw \t 0\n");			
+		} else if(f1.tempVar != null){
+			tempVar = f1.tempVar.getValue();
+		} else if(f2.tempVar != null){
+			tempVar = f2.tempVar.getValue();
+		}
+		return tempVar;
+	}
+	
+	public void genCodeRelOperation(Factor f1, Factor f2, Token op) throws IOException {
+		loadFactorInReg(f1, "r1");
+		loadFactorInReg(f2, "r2");		
+		
+		if(op.getType().equalsIgnoreCase(Constants.EQCOMP)){
+			codeWriterProgram.write("\t ceq \t r3,r1,r2\n");
+		} else if(op.getType().equalsIgnoreCase(Constants.NOTEQ)){
+			codeWriterProgram.write("\t cne \t r3,r1,r2\n");
+		} else if(op.getType().equalsIgnoreCase(Constants.LT)){
+			codeWriterProgram.write("\t clt \t r3,r1,r2\n");
+		} else if(op.getType().equalsIgnoreCase(Constants.LESSEQ)){
+			codeWriterProgram.write("\t cle \t r3,r1,r2\n");
+		} else if(op.getType().equalsIgnoreCase(Constants.GT)){
+			codeWriterProgram.write("\t cgt \t r3,r1,r2\n");
+		} else if(op.getType().equalsIgnoreCase(Constants.GREATEQ)){
+			codeWriterProgram.write("\t cge \t r3,r1,r2\n");
 		}
 		String tempVar = "t" + tempVarCount++;
 		codeWriterData.write(tempVar + "\t dw \t 0\n");			
@@ -121,12 +195,6 @@ public class CodeGenerator {
 		tempT.setValue(tempVar);
 		tempT.setType(Constants.ID);
 		f1.tempVar = tempT;
-		
-//		lw r1,a(r0)
-//	    lw r2,b(r0)
-//	    add r3,r1,r2
-//	t1  dw 0
-//	    sw t1(r0),r3
 	}
 
 	private void loadFactorInReg(Factor f1, String reg) throws IOException {
@@ -141,5 +209,4 @@ public class CodeGenerator {
 			codeWriterProgram.write("\t lw \t " + reg + "," + f1.upId.getValue() + "(r0)\n");			
 		}
 	}
-
 }
