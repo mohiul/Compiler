@@ -1,2 +1,6 @@
-Table: No Entry
+Table: Global
+Name: program kind: FUNCTION type: null
+
+Table: program
+Name: id kind: VARIABLE type: int[3][2][1]
 

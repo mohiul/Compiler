@@ -1,6 +1,5 @@
 package smbl;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,6 +8,7 @@ import lex.Token;
 
 public class SymbolTable {
 	private String tableName;
+
 	public Map<String, SymbolTableRow> tableRowMap;
 
 	public SymbolTable(String tableName) {
@@ -30,9 +30,7 @@ public class SymbolTable {
 		String name = id.getValue();
 		SymbolTableRow row = new SymbolTableRow(name);
 		row.setKind(kind);
-		List<VariableType> typeList = new ArrayList<VariableType>();
-		typeList.add(getTypeByToken(type));
-		row.setTypeList(typeList);
+		row.setType(getTypeByToken(type));
 		SymbolTable linkTable = new SymbolTable(name);
 		row.setLink(linkTable);
 		tableRowMap.put(name, row);
@@ -49,14 +47,12 @@ public class SymbolTable {
 		String name = id.getValue();
 		SymbolTableRow row = new SymbolTableRow(name);
 		row.setKind(kind);
-		List<VariableType> typeList = new ArrayList<VariableType>();
-		typeList.add(getTypeByToken(type, arraySizeList));
-		row.setTypeList(typeList);
+		row.setType(getTypeByToken(type, arraySizeList));
 		tableRowMap.put(name, row);
 		return true;
 	}
 
-	private VariableType getTypeByToken(Token type, List<Token> arraySizeList) {
+	public static VariableType getTypeByToken(Token type, List<Token> arraySizeList) {
 		VariableType varType = new VariableType();
 		if(arraySizeList != null){
 			varType.setDimension(getArraySizesFromList(arraySizeList));			
@@ -65,7 +61,7 @@ public class SymbolTable {
 		return varType;
 	}
 	
-	private int[] getArraySizesFromList(List<Token> arraySizeList) {
+	private static int[] getArraySizesFromList(List<Token> arraySizeList) {
 		int[] sizeArray = new int[arraySizeList.size()];
 		int i = arraySizeList.size() - 1;
 		for(Token token : arraySizeList){
@@ -87,4 +83,11 @@ public class SymbolTable {
 		return str;
 	}
 	
+	public String getTableName() {
+		return tableName;
+	}
+
+	public void setTableName(String tableName) {
+		this.tableName = tableName;
+	}	
 }

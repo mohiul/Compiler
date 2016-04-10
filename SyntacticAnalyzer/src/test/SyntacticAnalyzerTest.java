@@ -325,4 +325,17 @@ public class SyntacticAnalyzerTest {
 		assertEquals("Type compatibility error for * at line: 1 position: 33\n", errContent.toString());
 	}
 	
+	@Test
+	public void testProg20() throws IOException{
+		parser.setLexReaderStr("class U {int test(int i, int j, float k){ }; }; program { U u; int i; i = u.test(1, 2, 3.0); };");
+		assertTrue(parser.parse());
+	}
+	
+	@Test
+	public void testProg21() throws IOException{
+		parser.setLexReaderStr("class U {int test(int i, int j, int k){ }; }; program { U u; int i; i = u.test(1, 2, 3.0); };");
+		assertFalse(parser.parse());
+		assertEquals("Incorrect type for parameter no: 3, function test at line: 1 position: 75\n", errContent.toString());
+	}
+	
 }

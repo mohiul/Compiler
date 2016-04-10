@@ -6,24 +6,26 @@ import java.util.Map;
 
 public class SymbolTableRow {
 	String varName;
-	List<VariableType> typeList;
+	VariableType type;
+	List<VariableType> paramTypeList;
 	VariableKind kind;
 	SymbolTable link;
 	
 	public SymbolTableRow(String varName) {
 		this.varName = varName;
-		typeList = new ArrayList<VariableType>();
+		type = new VariableType();
+		paramTypeList = new ArrayList<VariableType>();
 	}
 	
-	public SymbolTableRow(String varName, List<VariableType> typeList, VariableKind kind) {
+	public SymbolTableRow(String varName, VariableType type, VariableKind kind) {
 		this.varName = varName;
-		this.typeList = typeList;
+		this.type = type;
 		this.kind = kind;
 	}
 	
-	public SymbolTableRow(String varName, List<VariableType> typeList, VariableKind kind, SymbolTable link) {
+	public SymbolTableRow(String varName, VariableType type, VariableKind kind, SymbolTable link) {
 		this.varName = varName;
-		this.typeList = typeList;
+		this.type = type;
 		this.kind = kind;
 		this.link = link;
 	}
@@ -36,12 +38,24 @@ public class SymbolTableRow {
 		this.varName = varName;
 	}
 
-	public List<VariableType> getTypeList() {
-		return typeList;
+	public VariableType getType() {
+		return type;
 	}
 
-	public void setTypeList(List<VariableType> typeList) {
-		this.typeList = typeList;
+	public void setType(VariableType type) {
+		this.type = type;
+	}
+
+	public List<VariableType> getParamTypeList() {
+		return paramTypeList;
+	}
+
+	public void setParamTypeList(List<VariableType> paramTypeList) {
+		this.paramTypeList = paramTypeList;
+	}
+	
+	public void addParamType(VariableType paramType) {
+		paramTypeList.add(paramType);
 	}
 
 	public VariableKind getKind() {
@@ -82,17 +96,7 @@ public class SymbolTableRow {
 	public String toString(Map<String, SymbolTable> tableMap) {
 		if(link != null) tableMap.put(varName, link);
 		String str = "Name: " + varName + " kind: " + getVariableKindStr();
-		if(typeList.size() > 0){
-			str += " type: " + printTypeList();
-		}
-		return str;
-	}
-
-	private String printTypeList() {
-		String str = "";
-		for(VariableType type: typeList){
-			str += type.toString();
-		}
+		str += " type: " + type.toString();
 		return str;
 	}
 	

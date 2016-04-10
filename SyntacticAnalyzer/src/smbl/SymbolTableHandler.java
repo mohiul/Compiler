@@ -7,12 +7,14 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import lex.Constants;
 import lex.Token;
+import sdt.Expression;
 import sdt.Factor;
 import sdt.Type;
 
@@ -133,6 +135,8 @@ public class SymbolTableHandler {
 			System.err.println(errMsg);
 		} else {
 			currentTableScope.addRow(type, id, arraySizeList, VariableKind.PARAMETER);
+			functionTableScope.tableRowMap.get(currentTableScope.getTableName())
+				.addParamType(SymbolTable.getTypeByToken(type, arraySizeList));
 			toReturn = true;
 		}
 		return toReturn;
@@ -182,7 +186,7 @@ public class SymbolTableHandler {
 					row = classTableScope.tableRowMap.get(id.getValue());
 				}
 				if(row != null){
-					VariableType type = row.getTypeList().get(0);
+					VariableType type = row.getType();
 					if(checkDim){
 						int dimLength = 0;
 						if(type.getDimension() != null){
@@ -209,7 +213,7 @@ public class SymbolTableHandler {
 					}
 				}
 				if(functionInGlobalTableExists(id.getValue())){
-					typeToReturn.typeName = globalTable.tableRowMap.get(id.getValue()).getTypeList().get(0).getTypeName();
+					typeToReturn.typeName = globalTable.tableRowMap.get(id.getValue()).getType().getTypeName();
 				}
 			}
 		}
@@ -226,8 +230,15 @@ public class SymbolTableHandler {
 		}
 		return toReturn;
 	}
-//	TODO Remove parentId
+
+	public boolean checkVariableInClassExists(Token parentId, Token id, Type type) throws IOException {
+		return checkVariableInClassExists(parentId, id, false, 0, type);
+	}
 	public boolean checkVariableInClassExists(Token parentId, Token id, int noOfDim, Type type) throws IOException {
+		return checkVariableInClassExists(parentId, id, true, noOfDim, type);
+	}
+	
+	public boolean checkVariableInClassExists(Token parentId, Token id, boolean checkDim, int noOfDim, Type type) throws IOException {
 		boolean toReturn = false;
 		if(secondPass){
 			if(currentClassVariable == null){
@@ -253,19 +264,21 @@ public class SymbolTableHandler {
 				if(currentClassVariable != null){
 					SymbolTableRow row = currentClassVariable.tableRowMap.get(id.getValue());
 					if(row != null){
-						VariableType varType = row.getTypeList().get(0);
-						int dimLength = 0;
-						if(varType.getDimension() != null){
-							dimLength = varType.getDimension().length;
-						}
-						if(dimLength != noOfDim){
-							String errMsg = "Variable " + id.getValue() + " incorrect array dimension size at line: " 
-									+ id.getLineNo()  
-									+ " position: " 
-									+ id.getPositionInLine();
-							errWriter.write(errMsg + "\n");
-							System.err.println(errMsg);
-							toReturn = false;
+						VariableType varType = row.getType();
+						if(checkDim){
+							int dimLength = 0;
+							if(varType.getDimension() != null){
+								dimLength = varType.getDimension().length;
+							}
+							if(dimLength != noOfDim){
+								String errMsg = "Variable " + id.getValue() + " incorrect array dimension size at line: " 
+										+ id.getLineNo()  
+										+ " position: " 
+										+ id.getPositionInLine();
+								errWriter.write(errMsg + "\n");
+								System.err.println(errMsg);
+								toReturn = false;
+							}
 						}
 						String typeName = varType.getTypeName();
 						type.typeName = typeName;
@@ -275,9 +288,9 @@ public class SymbolTableHandler {
 								currentClassName = typeName;
 								currentClassVariable = globalTable.tableRowMap.get(typeName).getLink();
 							}
-						} else {
-							currentClassName = null;
-							currentClassVariable = null;					
+//						} else {
+//							currentClassName = null;
+//							currentClassVariable = null;					
 						}
 					}
 				}
@@ -298,7 +311,7 @@ public class SymbolTableHandler {
 		}
 		
 		if(row != null){
-			VariableType type = row.getTypeList().get(0);
+			VariableType type = row.getType();
 			String typeName = type.getTypeName();
 			if(globalTable.tableRowMap.containsKey(typeName)){
 				row = globalTable.tableRowMap.get(typeName);
@@ -356,13 +369,8 @@ public class SymbolTableHandler {
 	public boolean checkCompatableType(Type type1, Type type2, Token multOp) throws IOException {
 		boolean toReturn = false;
 		if(secondPass){
-			String typeName1 = type1.typeName;
-			if(typeName1.equalsIgnoreCase(Constants.INTEGERNUM)) typeName1 = Constants.RESERVED_WORD_INT;
-			if(typeName1.equalsIgnoreCase(Constants.FLOATNUM)) typeName1 = Constants.RESERVED_WORD_FLOAT;
-			
-			String typeName2 = type2.typeName;
-			if(typeName2.equalsIgnoreCase(Constants.INTEGERNUM)) typeName2 = Constants.RESERVED_WORD_INT;
-			if(typeName2.equalsIgnoreCase(Constants.FLOATNUM)) typeName2 = Constants.RESERVED_WORD_FLOAT;
+			String typeName1 = verifyTypeName(type1.typeName);
+			String typeName2 = verifyTypeName(type2.typeName);
 			
 			if((typeName1.equalsIgnoreCase(Constants.RESERVED_WORD_INT)
 					&& typeName2.equalsIgnoreCase(Constants.RESERVED_WORD_INT))
@@ -377,6 +385,62 @@ public class SymbolTableHandler {
 						+ multOp.getPositionInLine();
 				errWriter.write(errMsg + "\n");
 				System.err.println(errMsg);
+			}			
+		} else {
+			toReturn = true;
+		}
+		return toReturn;
+	}
+
+	private String verifyTypeName(String typeName) {
+		if(typeName.equalsIgnoreCase(Constants.INTEGERNUM)) typeName = Constants.RESERVED_WORD_INT;
+		if(typeName.equalsIgnoreCase(Constants.FLOATNUM)) typeName = Constants.RESERVED_WORD_FLOAT;
+		return typeName;
+	}
+
+	public boolean checkFuncParams(Token id, List<Expression> exprList) throws IOException {
+		boolean toReturn = false;
+		if(secondPass){
+			SymbolTableRow row = null;
+			if(currentClassVariable != null && currentClassVariable.tableRowMap.containsKey(id.getValue())){
+				row = currentClassVariable.tableRowMap.get(id.getValue());
+			} else if(functionInGlobalTableExists(id.getValue())){
+				row = globalTable.tableRowMap.get(id.getValue());
+			}
+			
+			if(row != null){
+				List<String> typeList = new ArrayList<String>();
+				for(Expression expr: exprList){
+					if(expr.arithExpr != null
+							&& expr.arithExpr.upType != null
+							&& expr.arithExpr.upType.typeName != null){
+						typeList.add(verifyTypeName(expr.arithExpr.upType.typeName));
+					} else {
+						throw new RuntimeException("expr upType is null in checkFuncParams!");
+					}
+				}
+				if(typeList.size() != row.getParamTypeList().size()){
+					String errMsg = "Incorrect number of parameters for function " + id.getValue() + " at line: " 
+							+ id.getLineNo()  
+							+ " position: " 
+							+ id.getPositionInLine();
+					errWriter.write(errMsg + "\n");
+					System.err.println(errMsg);					
+				}
+				for(int i = 0; i < row.getParamTypeList().size(); i++){
+					VariableType type = row.getParamTypeList().get(i);
+//					TODO Check array size as well
+					if(!typeList.get(i).equalsIgnoreCase(type.getTypeName())){
+						String errMsg = "Incorrect type for parameter no: " + (i+1) + ", function " + id.getValue() + " at line: " 
+								+ id.getLineNo()  
+								+ " position: " 
+								+ id.getPositionInLine();
+						errWriter.write(errMsg + "\n");
+						System.err.println(errMsg);
+						return false;
+					}
+				}
+				toReturn = true;
 			}			
 		} else {
 			toReturn = true;

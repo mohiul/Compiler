@@ -743,6 +743,7 @@ public class SyntacticAnalyzer {
 			variableTail2.upType = type;
 			if(match(Constants.POINT) 
 					&& match(Constants.ID, id)
+					&& tableHandler.checkVariableInClassExists(variableTail2.id, id, type)
 					&& indiceList(indiceList) 
 					&& tableHandler.checkVariableInClassExists(variableTail2.id, id, indiceList.getNoOfDim(), type) 
 					&& variableTail2(variableTail2_1)){
@@ -1288,6 +1289,7 @@ public class SyntacticAnalyzer {
 			Type type = new Type();
 			factor.upType = type;
 			if(match(Constants.ID, id)
+					&& tableHandler.checkVariableExists(id, type)
 					&& factorTail(factorTail)
 					&& tableHandler.checkVariableExists(id, factorTail.upIndiceListToCalc.getNoOfDim(), type)){
 				if(secondPass){
@@ -1392,6 +1394,7 @@ public class SyntacticAnalyzer {
 			factorTail.upType = type;
 			if( match(Constants.POINT)
 					&& match(Constants.ID, id)
+					&& tableHandler.checkVariableInClassExists(factorTail.downId, id, type)
 					&& factorTail(factorTail1)
 					&& tableHandler.checkVariableInClassExists(factorTail.downId, id, factorTail1.upIndiceListToCalc.getNoOfDim(), type)){
 				if(secondPass) {
@@ -1431,7 +1434,10 @@ public class SyntacticAnalyzer {
 		} else if(lookAheadIsIn(lookAhead, new String[]{ Constants.OPENPAR })){
 			AParams aParams = new AParams();
 			factorTail.upAParams = aParams;
-			if(match(Constants.OPENPAR) && aParams(aParams) && match(Constants.CLOSEPAR)){
+			aParams.downId = factorTail.downId;
+			if(match(Constants.OPENPAR) 
+					&& aParams(aParams) 
+					&& match(Constants.CLOSEPAR)){
 				if(secondPass) grammarWriter.write("factorTail -> '(' aParams ')'\n");
 			} else {
 				error = true;
@@ -1488,6 +1494,7 @@ public class SyntacticAnalyzer {
 			factorTail2.upType = type;
 			if( match(Constants.POINT)
 					&& match(Constants.ID, id)
+					&& tableHandler.checkVariableInClassExists(factorTail2.downId, id, type)
 					&& factorTail(factorTail)
 					&& tableHandler.checkVariableInClassExists(factorTail2.downId, id, factorTail.upIndiceListToCalc.getNoOfDim(), type)){
 				if(secondPass){
@@ -1834,7 +1841,9 @@ public class SyntacticAnalyzer {
 			AParamsTails aParamsTails = new AParamsTails();
 			aParams.expression = expression;
 			aParams.aParamsTails = aParamsTails;
-			if(expr(expression) && aParamsTails(aParamsTails)){
+			if(expr(expression) 
+					&& aParamsTails(aParamsTails)
+					&& tableHandler.checkFuncParams(aParams.downId, aParams.getExprList())){
 				if(secondPass) grammarWriter.write("aParams -> expr aParamsTails\n");
 			} else {
 				error = true;
@@ -1896,7 +1905,7 @@ public class SyntacticAnalyzer {
 			AParamsTail aParamsTail = new AParamsTail();
 			AParamsTails aParamsTails1 = new AParamsTails();
 			aParamsTails.aParamsTail = aParamsTail;
-			aParamsTails.aParamsTails1 = aParamsTails1;
+			aParamsTails.aParamsTails = aParamsTails1;
 			if(aParamsTail(aParamsTail) && aParamsTails(aParamsTails1)){
 				if(secondPass) grammarWriter.write("aParamsTails -> aParamsTail aParamsTails\n");
 			} else {
@@ -2055,9 +2064,8 @@ public class SyntacticAnalyzer {
 	
 	private void genCodeCreateVariable(Token id) throws IOException {
 		SymbolTableRow row = tableHandler.getVariable(id.getValue());
-		if(row.getKind() == VariableKind.VARIABLE
-				&& row.getTypeList().size() > 0){
-			VariableType varType = row.getTypeList().get(0);
+		if(row.getKind() == VariableKind.VARIABLE){
+			VariableType varType = row.getType();
 			if(varType.getTypeName().equalsIgnoreCase(Constants.RESERVED_WORD_INT)){
 				int[] dimArr = varType.getDimension();
 				if(dimArr.length == 0){
@@ -2078,9 +2086,8 @@ public class SyntacticAnalyzer {
 	
 	private void genCodeLoadVariable(Token id) throws IOException {
 		SymbolTableRow row = tableHandler.getVariable(id.getValue());
-		if(row.getKind() == VariableKind.VARIABLE
-				&& row.getTypeList().size() > 0){
-			VariableType varType = row.getTypeList().get(0);
+		if(row.getKind() == VariableKind.VARIABLE){
+			VariableType varType = row.getType();
 			if(varType.getTypeName().equalsIgnoreCase(Constants.RESERVED_WORD_INT)){
 				int[] dimArr = varType.getDimension();
 				if(dimArr == null || dimArr.length == 0){
