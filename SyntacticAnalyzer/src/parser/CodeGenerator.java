@@ -9,11 +9,12 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
-import java.nio.file.Files;
 
 import lex.Constants;
 import lex.Token;
+import sdt.Expression;
 import sdt.Factor;
+import sdt.ConditionCount;
 import smbl.SymbolTableHandler;
 import smbl.SymbolTableRow;
 import smbl.VariableKind;
@@ -26,12 +27,19 @@ public class CodeGenerator {
 	private String codeDataFileName;
 	private String codeProgramFileName;
 	private String codeFileName;
+	boolean secondPass;
 	int tempVarCount;
 	int zeroCount;
 	int endandCount;
+	int ifCount;
+	
+	public CodeGenerator(){
+		secondPass = false;
+	}
 	
 	public CodeGenerator(String codeFilename, 
 			SymbolTableHandler tableHandler) throws UnsupportedEncodingException, FileNotFoundException {
+		secondPass = false;
 		codeDataFileName = "codeData.txt";
 		codeProgramFileName = "codeProgram.txt";
 		this.codeFileName = codeFilename;
@@ -46,25 +54,27 @@ public class CodeGenerator {
 	}
 
 	public void closeWriter() throws IOException {
-		if(codeWriterData != null) codeWriterData.close();
-		if(codeWriterProgram != null) codeWriterProgram.close();
-		
-		codeWriterProgram = new BufferedWriter(new OutputStreamWriter(
-				new FileOutputStream(codeFileName), "utf-8"));
-		
-		codeWriterProgram.write("\t entry\n");
-		BufferedReader br = new BufferedReader(new FileReader(codeProgramFileName));
-		String line = null;
-	    while ((line = br.readLine()) != null) {
-	    	codeWriterProgram.write(line + "\n");
-	    }
-	    codeWriterProgram.write("\t hlt\n");
-	    codeWriterProgram.write("\n");
-		br = new BufferedReader(new FileReader(codeDataFileName));
-	    while ((line = br.readLine()) != null) {
-	    	codeWriterProgram.write(line + "\n");
-	    }
-	    codeWriterProgram.close();
+		if(secondPass){
+			if(codeWriterData != null) codeWriterData.close();
+			if(codeWriterProgram != null) codeWriterProgram.close();
+			
+			codeWriterProgram = new BufferedWriter(new OutputStreamWriter(
+					new FileOutputStream(codeFileName), "utf-8"));
+			
+			codeWriterProgram.write("\t entry\n");
+			BufferedReader br = new BufferedReader(new FileReader(codeProgramFileName));
+			String line = null;
+			while ((line = br.readLine()) != null) {
+				codeWriterProgram.write(line + "\n");
+			}
+			codeWriterProgram.write("\t hlt\n");
+			codeWriterProgram.write("\n");
+			br = new BufferedReader(new FileReader(codeDataFileName));
+			while ((line = br.readLine()) != null) {
+				codeWriterProgram.write(line + "\n");
+			}
+			codeWriterProgram.close();
+		}
 	}
 	
 	public void genCodeCreateVariable(Token id) throws IOException {
@@ -209,4 +219,40 @@ public class CodeGenerator {
 			codeWriterProgram.write("\t lw \t " + reg + "," + f1.upId.getValue() + "(r0)\n");			
 		}
 	}
+
+	public boolean genCodeIfCondition(Expression expression, ConditionCount cond) throws IOException {
+		if(secondPass){
+			if(expression.arithExpr != null
+					&& expression.arithExpr.term != null
+					&& expression.arithExpr.term.factor != null){
+				loadFactorInReg(expression.arithExpr.term.factor, "r1");
+				cond.ifCount = ifCount;
+				String elseStr = "else" + (ifCount++);
+				codeWriterProgram.write("\t bz \t r1, " + elseStr + "\n");
+				codeWriterProgram.write("\n");
+			}
+		}
+		return true;
+	}
+
+	public boolean genCodeIfCondElse(ConditionCount cond) throws IOException {
+		if(secondPass){
+			String endif = "endif" + cond.ifCount;
+			codeWriterProgram.write("\t j \t " + endif + "\n");
+			codeWriterProgram.write("else" + cond.ifCount + " \t \n");
+		}
+		return true;
+	}
+
+	public boolean genCodeEndIf(ConditionCount cond) throws IOException {
+		if(secondPass){
+			codeWriterProgram.write("endif" + cond.ifCount + " \t \n");
+		}
+		return true;
+	}
+
+	public void setSecondPass(boolean secondPass) {
+		this.secondPass = secondPass;
+	}
+	
 }

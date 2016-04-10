@@ -22,6 +22,7 @@ import sdt.FactorTail;
 import sdt.FactorTail2;
 import sdt.FuncDefTail;
 import sdt.Idnest;
+import sdt.ConditionCount;
 import sdt.Indice;
 import sdt.IndiceList;
 import sdt.RelExprTail;
@@ -59,7 +60,6 @@ public class SyntacticAnalyzer {
 	String file;
 	boolean secondPass;
 	boolean handlefile;
-	int registerCount;
 	
 	public SyntacticAnalyzer(String errorFileName, String grammarFileName, String codeFileName) throws IOException{
 		secondPass = false;
@@ -69,7 +69,7 @@ public class SyntacticAnalyzer {
 		lex = new LexicalAnalyzer(errorFileName);
 		errWriter = lex.getWriter();
 		tableHandler = new SymbolTableHandler(secondPass, errWriter);
-		registerCount = 0;
+		codeGenerator = new CodeGenerator();
 		this.errorFileName = errorFileName;
 		this.grammarFileName = grammarFileName;
 		this.codeFilename = codeFileName;
@@ -178,6 +178,7 @@ public class SyntacticAnalyzer {
 		
 		if(toReturn){
 			//Second Pass
+			secondPass = true;
 			lex.closeWriter();
 			
 			error = false;
@@ -194,7 +195,7 @@ public class SyntacticAnalyzer {
 					new OutputStreamWriter(
 					new FileOutputStream(grammarFileName), "utf-8"));
 			codeGenerator = new CodeGenerator(codeFilename, tableHandler);
-			secondPass = true;
+			codeGenerator.setSecondPass(secondPass);
 			lex.setSecondPass(secondPass);
 			tableHandler.setSecondPass(secondPass);
 			tableHandler.setErrWriter(errWriter);
@@ -887,15 +888,19 @@ public class SyntacticAnalyzer {
 			}
 		} else if(lookAheadIsIn(lookAhead, new String[]{ Constants.RESERVED_WORD_IF })){
 			Expression expression = new Expression();
+			ConditionCount cond = new ConditionCount();
 			if(match(Constants.RESERVED_WORD_IF)
 					&& match(Constants.OPENPAR)
 					&& expr(expression)
 					&& match(Constants.CLOSEPAR)
+					&& codeGenerator.genCodeIfCondition(expression, cond)
 					&& match(Constants.RESERVED_WORD_THEN)
 					&& statBlock()
+					&& codeGenerator.genCodeIfCondElse(cond)
 					&& match(Constants.RESERVED_WORD_ELSE)
 					&& statBlock()
-					&& match(Constants.SEMICOLON)){
+					&& match(Constants.SEMICOLON)
+					&& codeGenerator.genCodeEndIf(cond)){
 				if(secondPass){
 					grammarWriter.write("statement -> 'if' '(' expr ')' 'then' statBlock 'else' statBlock ';'\n");
 //					TODO Generate code for if

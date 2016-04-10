@@ -3,6 +3,13 @@ program {
 	int y;
 	x = 1;
 	y = 2;
-	x = not x;
+	if(x > y) then {
+		x = 3;
+		
+		if(x < y) then {
+			x = 1;
+		} else ;
+		
+	} else ;
 	
 };

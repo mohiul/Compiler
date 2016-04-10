@@ -1,3 +1,1 @@
-x	dw 0
-y	dw 0
-t0	 dw 	 0
+id	res 6
