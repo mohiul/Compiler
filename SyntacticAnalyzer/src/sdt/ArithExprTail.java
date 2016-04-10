@@ -4,6 +4,7 @@ import lex.Token;
 
 public class ArithExprTail {
 	public Token addOp;
-	public Term term;
+	public Term downTerm;
+	public Term upTerm;
 	public ArithExprTail arithExprTail;
 }

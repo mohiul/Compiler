@@ -37,7 +37,7 @@ public class Main {
 //		}
 		
 		//error file name
-		String codeFileName = "code.txt";
+		String codeFileName = "code.m";
 //		System.out.print("Please enter output file name for moon code [code.txt]:");
 //		inputFile = br.readLine();
 //		if(inputFile.length() > 0){

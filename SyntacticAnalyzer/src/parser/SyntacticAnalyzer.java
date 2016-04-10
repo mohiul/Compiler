@@ -683,11 +683,13 @@ public class SyntacticAnalyzer {
 						if(expression.arithExpr != null
 								&& expression.arithExpr.term != null
 								&& expression.arithExpr.term.factor != null){
-							if(expression.arithExpr.term.factor.upNum != null){
+							if(expression.arithExpr.term.factor.tempVar != null){
+								codeGenerator.genCodeAssignment(variableTail1.id, expression.arithExpr.term.factor.tempVar);
+							} else if(expression.arithExpr.term.factor.upNum != null){
 								codeGenerator.genCodeAssignment(variableTail1.id, expression.arithExpr.term.factor.upNum);
 							} else if(expression.arithExpr.term.factor.upId != null){
 								codeGenerator.genCodeAssignment(variableTail1.id, expression.arithExpr.term.factor.upId);
-							}
+							} 
 						}
 						
 					}
@@ -1129,6 +1131,7 @@ public class SyntacticAnalyzer {
 			arithExpr.upType = type;
 			arithExpr.term = term;
 			arithExpr.arithExprTail = arithExprTail;
+			arithExprTail.downTerm = term;
 			if(term(term) && arithExprTail(arithExprTail)){
 				if(secondPass){
 					grammarWriter.write("arithExpr -> term arithExprTail\n");
@@ -1165,14 +1168,29 @@ public class SyntacticAnalyzer {
 			Term term = new Term();
 			term.upType = new Type();
 			ArithExprTail arithExprTail1 = new ArithExprTail();
+			arithExprTail1.downTerm = term;
 			arithExprTail.addOp = addOp;
-			arithExprTail.term = term;
+			arithExprTail.upTerm = term;
 			arithExprTail.arithExprTail = arithExprTail1;
 			if(addOp(addOp) 
 					&& term(term)
-					&& tableHandler.checkCompatableType(arithExprTail.term.upType, term.upType, addOp)
+					&& tableHandler.checkCompatableType(arithExprTail.downTerm.upType, term.upType, addOp)
 					&& arithExprTail(arithExprTail1)){
-				if(secondPass) grammarWriter.write("arithExprTail -> addOp term arithExprTail\n");
+				if(secondPass){
+					grammarWriter.write("arithExprTail -> addOp term arithExprTail\n");
+					Factor f1 = null;
+					Factor f2 = null;
+					if(arithExprTail.downTerm != null
+							&& arithExprTail.downTerm.factor != null){
+						f1 = arithExprTail.downTerm.factor;
+					}
+					if(term.factor != null){
+						f2 = term.factor;
+					}
+					if(f1!= null && f2 != null){
+						codeGenerator.genCodeAdd(f1, f2);
+					}					
+				}
 			} else {
 				error = true;
 			}
@@ -1282,7 +1300,10 @@ public class SyntacticAnalyzer {
 					&& factor(factor)
 					&& tableHandler.checkCompatableType(termTail.downFactor.upType, factor.upType, multOp)
 					&& termTail(termTail1)){
-				if(secondPass) grammarWriter.write("termTail -> multOp factor termTail\n");
+				if(secondPass) {
+					grammarWriter.write("termTail -> multOp factor termTail\n");
+					
+				}
 			} else {
 				error = true;
 			}

@@ -10,6 +10,7 @@ public class SymbolTableRow {
 	List<VariableType> paramTypeList;
 	VariableKind kind;
 	SymbolTable link;
+	String tempVarName;
 	
 	public SymbolTableRow(String varName) {
 		this.varName = varName;
