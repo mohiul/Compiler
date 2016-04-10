@@ -3,6 +3,6 @@ program {
 	int y;
 	x = 1;
 	y = 2;
-	x = 1 + y;
+	x = x + y * 1 / 2 - 4 * 6;
 	
 };

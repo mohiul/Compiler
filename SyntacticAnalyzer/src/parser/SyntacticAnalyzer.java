@@ -1188,7 +1188,7 @@ public class SyntacticAnalyzer {
 						f2 = term.factor;
 					}
 					if(f1!= null && f2 != null){
-						codeGenerator.genCodeAdd(f1, f2);
+						codeGenerator.genCodeOperation(f1, f2, addOp);
 					}					
 				}
 			} else {
@@ -1302,7 +1302,15 @@ public class SyntacticAnalyzer {
 					&& termTail(termTail1)){
 				if(secondPass) {
 					grammarWriter.write("termTail -> multOp factor termTail\n");
-					
+					Factor f1 = null;
+					Factor f2 = null;
+					if(termTail.downFactor != null){
+						f1 = termTail.downFactor;
+					}
+					f2 = factor;
+					if(f1!= null && f2 != null){
+						codeGenerator.genCodeOperation(f1, f2, multOp);
+					}
 				}
 			} else {
 				error = true;
