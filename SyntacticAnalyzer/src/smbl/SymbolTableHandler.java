@@ -425,7 +425,8 @@ public class SymbolTableHandler {
 							+ " position: " 
 							+ id.getPositionInLine();
 					errWriter.write(errMsg + "\n");
-					System.err.println(errMsg);					
+					System.err.println(errMsg);
+					return false;
 				}
 				for(int i = 0; i < row.getParamTypeList().size(); i++){
 					VariableType type = row.getParamTypeList().get(i);

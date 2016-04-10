@@ -338,4 +338,11 @@ public class SyntacticAnalyzerTest {
 		assertEquals("Incorrect type for parameter no: 3, function test at line: 1 position: 75\n", errContent.toString());
 	}
 	
+	@Test
+	public void testProg22() throws IOException{
+		parser.setLexReaderStr("class U {int test(int i, int j){ }; }; program { U u; int i; i = u.test(1, 2, 3.0); };");
+		assertFalse(parser.parse());
+		assertEquals("Incorrect number of parameters for function test at line: 1 position: 68\n", errContent.toString());
+	}
+	
 }

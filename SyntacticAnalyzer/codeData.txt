@@ -1,1 +1,1 @@
-id	res 6
+id	dw 0
