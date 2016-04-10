@@ -57,7 +57,7 @@ public class SyntacticAnalyzerTest2 {
 	
 	@Test
 	public void testProg3() throws IOException{
-		parser.setLexReaderStr("class id { }; program { } ; id id1 ( id id1 , id id2 ) { id1 = id2 + id2 ; } ;");
+		parser.setLexReaderStr("class id { int i; }; program { } ; id id1 ( id id1 , id id2 ) { id1.i = id2.i + id2.i ; } ;");
 		assertTrue(parser.parse());
 	}
 	
@@ -93,19 +93,19 @@ public class SyntacticAnalyzerTest2 {
 	
 	@Test
 	public void testProg9() throws IOException{
-		parser.setLexReaderStr("class id { id id1 [ 10 ][ 10 ] ;  id id2 (id id1 , id id2 ){ id id3 ; }; }; program { id id1 ; id1 = id1 ; } ; id id1 ( id id1 [ 10 ] [ 10 ] , id  id2 ) { } ;");
+		parser.setLexReaderStr("class id { id id1 [ 10 ][ 10 ] ; int i;  id id2 (id id1 , id id2 ){ id id3 ; }; }; program { id id1 ; id1.i = id1.i ; } ; id id1 ( id id1 [ 10 ] [ 10 ] , id  id2 ) { } ;");
 		assertTrue(parser.parse());
 	}
 	
 	@Test
 	public void testProg10() throws IOException{
-		parser.setLexReaderStr("class id { id id1 [ 10 ][ 10 ] ;  id id2 (id id1 , id id2 ){ id id3 ; }; }; program { id id1 ; id1 = id1 ; id1 . id1 [ id1 ] [ id1 ] = id1 . id1[1][1] + id1 * id1 > id1 . id1[1][1] ; } ; id id1 ( id id1 [ 10 ] [ 10 ] , id  id2 ) { } ;");
+		parser.setLexReaderStr("class id { id id1 [ 10 ][ 10 ] ; int i;  id id2 (id id1 , id id2 ){ id id3 ; }; }; program { id id1 ; id1.i = id1.i ; id1 . id1 [ id1 ] [ id1 ].i = id1 . id1[1][1].i + id1.i * id1.i > id1 . id1[1][1].i ; } ; id id1 ( id id1 [ 10 ] [ 10 ] , id  id2 ) { } ;");
 		assertTrue(parser.parse());
 	}
 	
 	@Test
 	public void testProg11() throws IOException{
-		parser.setLexReaderStr("class id { id id1 [ 10 ][ 10 ] ;  id id2 (id id3 , id id4 ){ id id5 ; };  id id6 ; }; program { id id1 ; id1 = id1 ; id1 . id1 [ id1 ] [ id1 ] = id1 . id1[ 10 ][ 10 ] + id1 * id1 > id1 . id1[ 10 ][ 10 ] ; } ; id id1 ( id id1 [ 10 ] [ 10 ] , id  id2 ) { } ;");
+		parser.setLexReaderStr("class id { id id1 [ 10 ][ 10 ] ; int i;  id id2 (id id3 , id id4 ){ id id5 ; };  id id6 ; }; program { id id1 ; id1.i = id1.i ; id1 . id1 [ id1 ] [ id1 ].i = id1 . id1[ 10 ][ 10 ].i + id1.i * id1.i > id1 . id1[ 10 ][ 10 ].i ; } ; id id1 ( id id1 [ 10 ] [ 10 ] , id  id2 ) { } ;");
 		assertTrue(parser.parse());
 	}
 	
@@ -117,13 +117,13 @@ public class SyntacticAnalyzerTest2 {
 	
 	@Test
 	public void testProg13() throws IOException{
-		parser.setLexReaderStr("class id { } ; program { id id ;  id = id + id ; id = id + id ; } ;");
+		parser.setLexReaderStr("class id { int i; } ; program { id id ;  id.i = id.i + id.i ; id.i = id.i + id.i ; } ;");
 		assertTrue(parser.parse());
 	}
 	
 	@Test
 	public void testProg14() throws IOException{
-		parser.setLexReaderStr("class id { id id; id id1[10]; } ; program { id id ; id id1[10];  id = id ; id1 [ id ] = id . id1[ id . id1[ id ] ]  ; } ;");
+		parser.setLexReaderStr("class id { id id; id id1[10]; int i; } ; program { id id ; id id1[10];  id.i = id.i ; id1 [ id ].i = id . id1[ id . id1[ id ].i ].i  ; } ;");
 		assertTrue(parser.parse());
 	}
 	
@@ -144,5 +144,5 @@ public class SyntacticAnalyzerTest2 {
 		parser.setLexReaderStr("program { int id[1][2][3]; get ( id[1][2][3] ) ; } ; ");
 		assertTrue(parser.parse());
 	}
-
+	
 }

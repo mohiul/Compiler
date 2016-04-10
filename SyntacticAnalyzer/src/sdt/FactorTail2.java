@@ -10,4 +10,5 @@ public class FactorTail2 {
 	public IndiceList downIndiceList;
 	
 	public FactorTail upFactorTail;
+	public Type upType;
 }

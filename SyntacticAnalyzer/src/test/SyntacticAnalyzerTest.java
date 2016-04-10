@@ -285,14 +285,14 @@ public class SyntacticAnalyzerTest {
 	
 	@Test
 	public void testIF() throws IOException{
-		parser.setLexReaderStr("program { int array[10]; int idx; float maxValue; if(array[idx] > maxValue) then { maxValue = array[idx]; } else{}; };");
+		parser.setLexReaderStr("program { int array[10]; int idx; int maxValue; if(array[idx] > maxValue) then { maxValue = array[idx]; } else{}; };");
 		assertTrue(parser.parse());
 		
 	}
 	
 	@Test
 	public void testForIF() throws IOException{
-		parser.setLexReaderStr("program { int array[10]; float maxValue; for( int idx = 1; idx <= 99; idx = ( idx ) + 1){if(array[idx] < maxValue) then {maxValue = array[idx];}else{};}; };");
+		parser.setLexReaderStr("program { int array[10]; int maxValue; for( int idx = 1; idx <= 99; idx = ( idx ) + 1){if(array[idx] < maxValue) then {maxValue = array[idx];}else{};}; };");
 		assertTrue(parser.parse());
 		
 	}
@@ -306,7 +306,7 @@ public class SyntacticAnalyzerTest {
 	
 	@Test
 	public void testExpressions() throws IOException{
-		parser.setLexReaderStr("program { float value; value = 100 * (2 + 3.0 / 7.0006); value = 1.05 + ((2.04 * 2.47) - 3.0) + 7.0006 ; return (value); };");
+		parser.setLexReaderStr("program { float value; value = 100.1 * (2.2 + 3.0 / 7.0006); value = 1.05 + ((2.04 * 2.47) - 3.0) + 7.0006 ; return (value); };");
 		assertTrue(parser.parse());
 		
 	}
@@ -316,6 +316,13 @@ public class SyntacticAnalyzerTest {
 		parser.setLexReaderStr("program { int id[1][2][3]; get ( id[1][2] ) ; } ; ");
 		assertFalse(parser.parse());
 		assertEquals("Variable id incorrect array dimension size at line: 1 position: 34\n", errContent.toString());
+	}
+
+	@Test
+	public void testProg19() throws IOException{
+		parser.setLexReaderStr("program { int i; float j; i = i * j;};");
+		assertFalse(parser.parse());
+		assertEquals("Type compatibility error for * at line: 1 position: 33\n", errContent.toString());
 	}
 	
 }

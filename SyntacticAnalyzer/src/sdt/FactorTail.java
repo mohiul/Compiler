@@ -11,4 +11,6 @@ public class FactorTail {
 	public FactorTail2 factorTail2;
 	public AParams upAParams;
 	public IndiceList upIndiceListToCalc;
+
+	public Type upType;
 }

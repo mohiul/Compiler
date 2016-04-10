@@ -1,10 +1,1 @@
-var1	res 0
-maxValue	dw 0
-idx	dw 0
-minValue	dw 0
-maxValue	dw 0
-idx	dw 0
-sample	res 100
-idx	dw 0
-maxValue	dw 0
-minValue	dw 0
+int1	dw 0

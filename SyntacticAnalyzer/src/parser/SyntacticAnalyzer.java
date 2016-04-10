@@ -28,6 +28,7 @@ import sdt.RelExprTail;
 import sdt.StatmentTail;
 import sdt.Term;
 import sdt.TermTail;
+import sdt.Type;
 import sdt.VarDeclStatTail;
 import sdt.VarDeclTail;
 import sdt.VarDefTail;
@@ -625,7 +626,9 @@ public class SyntacticAnalyzer {
 				Constants.EQ})){
 			StatmentTail statmentTail = new StatmentTail();
 			statmentTail.id = varDeclStatTail.id;
-			if(tableHandler.checkVariableExists(varDeclStatTail.id) 
+			Type type = new Type();
+			statmentTail.downType = type;
+			if(tableHandler.checkVariableExists(varDeclStatTail.id, type) 
 					&& statmentTail(statmentTail)){
 				if(secondPass) grammarWriter.write("varDeclStatTail -> statmentTail\n");
 			} else {
@@ -671,11 +674,14 @@ public class SyntacticAnalyzer {
 				Constants.POINT,
 				Constants.EQ})){
 			VariableTail1 variableTail1 = new VariableTail1();
+			variableTail1.upType = statmentTail.downType;
 			Expression expression = new Expression();
 			variableTail1.id = statmentTail.id;
+			Token assignOp = new Token();
 			if(variableTail1(variableTail1)
-					&& assignOp()
+					&& assignOp(assignOp)
 					&& expr(expression)
+					&& tableHandler.checkCompatableType(variableTail1.upType, expression.arithExpr.upType, assignOp)
 					&& match(Constants.SEMICOLON)){
 				if(secondPass){
 					grammarWriter.write("statmentTail -> variableTail1 assignOp expr ';'\n");
@@ -701,10 +707,17 @@ public class SyntacticAnalyzer {
 			VariableTail2 variableTail2 = new VariableTail2();
 			variableTail2.id = variableTail1.id;
 			variableTail2.indiceList = indiceList;
+			Type type = new Type();
+			variableTail1.upType = type;
 			if(indiceList(indiceList)
-					&& tableHandler.checkVariableExists(variableTail1.id, indiceList.getNoOfDim())
+					&& tableHandler.checkVariableExists(variableTail1.id, indiceList.getNoOfDim(), type)
 					&& variableTail2(variableTail2)){
-				if(secondPass) grammarWriter.write("variableTail1 -> indiceList variableTail2\n");
+				if(secondPass){
+					grammarWriter.write("variableTail1 -> indiceList variableTail2\n");
+					if(variableTail2.upType != null && variableTail2.upType.typeName != null){
+						Type.copyType(variableTail1.upType, variableTail2.upType);
+					}
+				}
 			} else {
 				error = true;
 			}
@@ -726,12 +739,19 @@ public class SyntacticAnalyzer {
 			VariableTail2 variableTail2_1 = new VariableTail2();
 			variableTail2_1.id = id;
 			variableTail2_1.indiceList = indiceList;
+			Type type = new Type();
+			variableTail2.upType = type;
 			if(match(Constants.POINT) 
 					&& match(Constants.ID, id)
 					&& indiceList(indiceList) 
-					&& tableHandler.checkVariableInClassExists(variableTail2.id, id, indiceList.getNoOfDim()) 
+					&& tableHandler.checkVariableInClassExists(variableTail2.id, id, indiceList.getNoOfDim(), type) 
 					&& variableTail2(variableTail2_1)){
-				if(secondPass) grammarWriter.write("variableTail2 -> '.' 'id' indiceList variableTail2\n");
+				if(secondPass){
+					grammarWriter.write("variableTail2 -> '.' 'id' indiceList variableTail2\n");
+					if(variableTail2_1.upType != null && variableTail2_1.upType.typeName != null){
+						Type.copyType(variableTail2.upType, variableTail2_1.upType);
+					}
+				}
 			} else {
 				error = true;
 			}
@@ -883,17 +903,20 @@ public class SyntacticAnalyzer {
 			ArithExpr arithExpr = new ArithExpr();
 			Token relOp = new Token();
 			AssignStat assignStat = new AssignStat();
+			Token assignOp = new Token(); 
 			if(match(Constants.RESERVED_WORD_FOR)
 					&& match(Constants.OPENPAR)
 					&& type(type)
 					&& match(Constants.ID, id)
 					&& tableHandler.createVariableEntry(type, id, null)
-					&& assignOp()
+					&& assignOp(assignOp)
 					&& expr(expression)
+					&& tableHandler.checkCompatableType(new Type(type), expression.arithExpr.upType, assignOp)
 					&& match(Constants.SEMICOLON)
 					&& arithExpr(arithExpr)
 					&& relOp(relOp)
 					&& expr(expression1)
+					&& tableHandler.checkCompatableType(arithExpr.upType, expression1.arithExpr.upType, relOp)
 					&& match(Constants.SEMICOLON)
 					&& assignStat(assignStat)
 					&& match(Constants.CLOSEPAR)
@@ -921,7 +944,11 @@ public class SyntacticAnalyzer {
 			Expression expression = new Expression();
 			assignStat.variable = variable;
 			assignStat.expression = expression;
-			if(variable(variable) && assignOp() && expr(expression)){
+			Token assignOp = new Token();
+			if(variable(variable) 
+					&& assignOp(assignOp) 
+					&& expr(expression)
+					&& tableHandler.checkCompatableType(variable.upType, expression.arithExpr.upType, assignOp)){
 				if(secondPass) grammarWriter.write("assignStat -> variable assignOp expr\n");
 			} else {
 				error = true;
@@ -1059,11 +1086,17 @@ public class SyntacticAnalyzer {
 				Constants.PLUS,
 				Constants.MINUS})) {
 			Term term = new Term();
+			Type type = new Type();
+			term.upType = type;
 			ArithExprTail arithExprTail = new ArithExprTail();
+			arithExpr.upType = type;
 			arithExpr.term = term;
 			arithExpr.arithExprTail = arithExprTail;
 			if(term(term) && arithExprTail(arithExprTail)){
-				if(secondPass) grammarWriter.write("arithExpr -> term arithExprTail\n");
+				if(secondPass){
+					grammarWriter.write("arithExpr -> term arithExprTail\n");
+					Type.copyType(arithExpr.upType,term.upType);
+				}
 			} else {
 				error = true;
 			}
@@ -1093,11 +1126,15 @@ public class SyntacticAnalyzer {
 				Constants.RESERVED_WORD_OR})) {
 			Token addOp = new Token();
 			Term term = new Term();
+			term.upType = new Type();
 			ArithExprTail arithExprTail1 = new ArithExprTail();
 			arithExprTail.addOp = addOp;
 			arithExprTail.term = term;
 			arithExprTail.arithExprTail = arithExprTail1;
-			if(addOp(addOp) && term(term) && arithExprTail(arithExprTail1)){
+			if(addOp(addOp) 
+					&& term(term)
+					&& tableHandler.checkCompatableType(arithExprTail.term.upType, term.upType, addOp)
+					&& arithExprTail(arithExprTail1)){
 				if(secondPass) grammarWriter.write("arithExprTail -> addOp term arithExprTail\n");
 			} else {
 				error = true;
@@ -1160,10 +1197,16 @@ public class SyntacticAnalyzer {
 				Constants.MINUS})) {
 			Factor factor = new Factor();
 			TermTail termTail = new TermTail();
+			termTail.downFactor = factor;
 			term.factor = factor;
 			term.termTail = termTail;
 			if(factor(factor) && termTail(termTail)){
-				if(secondPass) grammarWriter.write("term -> factor termTail\n");
+				if(secondPass){
+					grammarWriter.write("term -> factor termTail\n");
+					if(term.upType == null) term.upType = new Type();
+					if(factor.upType == null) factor.upType = new Type();
+					Type.copyType(term.upType, factor.upType);
+				}
 			} else {
 				error = true;
 			}
@@ -1197,10 +1240,11 @@ public class SyntacticAnalyzer {
 			Token multOp = new Token();
 			Factor factor = new Factor();
 			TermTail termTail1 = new TermTail();
-			termTail.multOp = multOp;
-			termTail.factor = factor;
-			termTail.termTail1 = termTail1;
-			if(multOp(multOp) && factor(factor) && termTail(termTail1)){
+			termTail1.downFactor = factor;
+			if(multOp(multOp) 
+					&& factor(factor)
+					&& tableHandler.checkCompatableType(termTail.downFactor.upType, factor.upType, multOp)
+					&& termTail(termTail1)){
 				if(secondPass) grammarWriter.write("termTail -> multOp factor termTail\n");
 			} else {
 				error = true;
@@ -1241,11 +1285,16 @@ public class SyntacticAnalyzer {
 			factorTail.downId = id;
 			factor.upId = id;
 			factor.factorTail = factorTail;
+			Type type = new Type();
+			factor.upType = type;
 			if(match(Constants.ID, id)
 					&& factorTail(factorTail)
-					&& tableHandler.checkVariableExists(id, factorTail.upIndiceListToCalc.getNoOfDim())){
+					&& tableHandler.checkVariableExists(id, factorTail.upIndiceListToCalc.getNoOfDim(), type)){
 				if(secondPass){
 					grammarWriter.write("factor -> 'id' factorTail\n");
+					if(factorTail.upType != null && factorTail.upType.typeName != null){
+						Type.copyType(factor.upType, factorTail.upType);
+					}
 //					genCodeLoadVariable(id);
 				}
 			} else {
@@ -1255,7 +1304,11 @@ public class SyntacticAnalyzer {
 			Token num = new Token();
 			factor.upNum = num;
 			if(num(num)){
-				if(secondPass) grammarWriter.write("factor -> num\n");
+				if(secondPass) {
+					grammarWriter.write("factor -> num\n");
+					factor.upType = new Type();
+					factor.upType.typeName = num.getType();
+				}
 			} else {
 				error = true;
 			}
@@ -1263,7 +1316,12 @@ public class SyntacticAnalyzer {
 			ArithExpr arithExpr = new ArithExpr();
 			factor.upArithExpr = arithExpr;
 			if(match(Constants.OPENPAR) && arithExpr(arithExpr) && match(Constants.CLOSEPAR)){
-				if(secondPass) grammarWriter.write("factor -> '(' arithExpr ')'\n");
+				if(secondPass) {
+					grammarWriter.write("factor -> '(' arithExpr ')'\n");
+					if(factor.upType == null) factor.upType = new Type();
+					if(arithExpr.upType == null) arithExpr.upType = new Type();
+					Type.copyType(factor.upType, arithExpr.upType);
+				}
 			} else {
 				error = true;
 			}
@@ -1273,6 +1331,9 @@ public class SyntacticAnalyzer {
 			if(match(Constants.RESERVED_WORD_NOT) && factor(factor1)){
 				if(secondPass){
 					grammarWriter.write("factor -> 'not' factor\n");
+					if(factor.upType == null) factor.upType = new Type();
+					if(factor1.upType == null) factor1.upType = new Type();
+					Type.copyType(factor.upType, factor1.upType);
 //					TODO Generate code for Not factor
 				}
 			} else {
@@ -1285,6 +1346,9 @@ public class SyntacticAnalyzer {
 			if(sign(sign) && factor(factor1)){
 				if(secondPass){
 					grammarWriter.write("factor -> sign factor\n");
+					if(factor.upType == null) factor.upType = new Type();
+					if(factor1.upType == null) factor1.upType = new Type();
+					Type.copyType(factor.upType, factor1.upType);
 //					TODO Generate code for sign factor
 				}
 			} else {
@@ -1324,11 +1388,18 @@ public class SyntacticAnalyzer {
 			FactorTail factorTail1 = new FactorTail();
 			factorTail1.downId = id;
 			factorTail.factorTail = factorTail1;
+			Type type = new Type();
+			factorTail.upType = type;
 			if( match(Constants.POINT)
 					&& match(Constants.ID, id)
 					&& factorTail(factorTail1)
-					&& tableHandler.checkVariableInClassExists(factorTail.downId, id, factorTail1.upIndiceListToCalc.getNoOfDim())){
-				if(secondPass) grammarWriter.write("factorTail -> '.' 'id' factorTail\n");
+					&& tableHandler.checkVariableInClassExists(factorTail.downId, id, factorTail1.upIndiceListToCalc.getNoOfDim(), type)){
+				if(secondPass) {
+					grammarWriter.write("factorTail -> '.' 'id' factorTail\n");
+					if(factorTail1.upType != null && factorTail1.upType.typeName != null){
+						Type.copyType(factorTail.upType, factorTail1.upType);
+					}
+				}
 			} else {
 				error = true;
 			}
@@ -1347,7 +1418,13 @@ public class SyntacticAnalyzer {
 			if(indice(indice) 
 					&& indiceList(indiceList)
 					&& factorTail2(factorTail2)){
-				if(secondPass) grammarWriter.write("factorTail -> indice indiceList factorTail2\n");
+				if(secondPass) {
+					grammarWriter.write("factorTail -> indice indiceList factorTail2\n");
+					if(factorTail2.upType != null && factorTail2.upType.typeName != null){
+						if(factorTail.upType == null) factorTail.upType = new Type();
+						Type.copyType(factorTail.upType, factorTail2.upType);
+					}
+				}
 			} else {
 				error = true;
 			}
@@ -1407,11 +1484,18 @@ public class SyntacticAnalyzer {
 			factorTail.downId = id;
 			factorTail2.upId = id;
 			factorTail2.upFactorTail = factorTail;
+			Type type = new Type();
+			factorTail2.upType = type;
 			if( match(Constants.POINT)
 					&& match(Constants.ID, id)
 					&& factorTail(factorTail)
-					&& tableHandler.checkVariableInClassExists(factorTail2.downId, id, factorTail.upIndiceListToCalc.getNoOfDim())){
-				if(secondPass) grammarWriter.write("factorTail2 -> '.' 'id' factorTail\n");
+					&& tableHandler.checkVariableInClassExists(factorTail2.downId, id, factorTail.upIndiceListToCalc.getNoOfDim(), type)){
+				if(secondPass){
+					grammarWriter.write("factorTail2 -> '.' 'id' factorTail\n");
+					if(factorTail.upType != null && factorTail.upType.typeName != null){
+						Type.copyType(factorTail2.upType, factorTail.upType);
+					}
+				}
 			} else {
 				error = true;
 			}
@@ -1448,8 +1532,10 @@ public class SyntacticAnalyzer {
 			variableTail.downIdnest = idnest;
 			variable.upIdnest = idnest;
 			variable.upVariableTail = variableTail;
+			Type type = new Type();
+			variable.upType = type;
 			if(idnest(idnest)
-					&& tableHandler.checkVariableExists(idnest.id, idnest.indiceList.getNoOfDim())
+					&& tableHandler.checkVariableExists(idnest.id, idnest.indiceList.getNoOfDim(), type)
 					&& variableTail(variableTail)){ 
 				if(secondPass) grammarWriter.write("variable -> idnest variableTail\n");
 			} else {
@@ -1470,9 +1556,11 @@ public class SyntacticAnalyzer {
 			VariableTail variableTail1 = new VariableTail();
 			variableTail.upIdnest = idnest;
 			variableTail.variableTail = variableTail1;
+			Type type = new Type();
+			variableTail.upType = type;
 			if(match(Constants.POINT) 
 					&& idnest(idnest)
-					&& tableHandler.checkVariableInClassExists(variableTail.downIdnest.id, idnest.id, idnest.indiceList.getNoOfDim())
+					&& tableHandler.checkVariableInClassExists(variableTail.downIdnest.id, idnest.id, idnest.indiceList.getNoOfDim(), type)
 					&& variableTail(variableTail1)){ 
 				if(secondPass) grammarWriter.write("variableTail -> '.' idnest variableTail\n");
 			} else {
@@ -1840,11 +1928,11 @@ public class SyntacticAnalyzer {
 		return !error;
 	}
 	
-	private boolean assignOp() throws IOException{
+	private boolean assignOp(Token assignOp) throws IOException{
 		error = !skipErrors(new String[]{ Constants.EQ }, 
 				new String[]{ });
 		if(lookAheadIsIn(lookAhead, new String[]{ Constants.EQ })) {
-			if(match(Constants.EQ)){
+			if(match(Constants.EQ, assignOp)){
 				if(secondPass) grammarWriter.write("assignOp -> '='\n");
 			} else {
 				error = true;
