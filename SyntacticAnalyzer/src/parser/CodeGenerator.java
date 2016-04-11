@@ -177,13 +177,21 @@ public class CodeGenerator {
 			currentProgramWriter.write("\t addi \t r1,r1," + token.getValue() + "\n");
 			currentProgramWriter.write("\t sw \t " + id.getValue() + "(r0),r1\n");
 		} else if(token.getType().equalsIgnoreCase(Constants.ID)){
-			currentProgramWriter.write("\t lw \t r1," + token.getValue() + "(r0)\n");
-			currentProgramWriter.write("\t sw \t " + id.getValue() + "(r0),r1\n");
+			currentProgramWriter.write("\t lw \t r1," + checkTempVarName(token.getValue()) + "(r0)\n");
+			currentProgramWriter.write("\t sw \t " + checkTempVarName(id.getValue()) + "(r0),r1\n");
 //			lw r1,b(r0)
 //			sw a(r0),r1
 		}
 		currentProgramWriter.write("\n");
 		
+	}
+
+	private String checkTempVarName(String tokenValue) {
+		SymbolTableRow row = tableHandler.getVariable(tokenValue);
+		if(row != null && row.getTempVarName() != null){
+			tokenValue = row.getTempVarName();
+		}
+		return tokenValue;
 	}
 
 	public void genCodeNotOperation(Factor f1, Token not) throws IOException {
@@ -288,7 +296,7 @@ public class CodeGenerator {
 				currentProgramWriter.write("\t addi \t " + reg + "," + reg + "," + f1.upNum.getValue() + "\n");			
 			}
 		} else if(f1.upId != null){
-			currentProgramWriter.write("\t lw \t " + reg + "," + f1.upId.getValue() + "(r0)\n");			
+			currentProgramWriter.write("\t lw \t " + reg + "," + checkTempVarName(f1.upId.getValue()) + "(r0)\n");			
 		}
 	}
 
@@ -430,6 +438,7 @@ public class CodeGenerator {
 			SymbolTableRow row = tableHandler.getVariable(id.getValue());
 			if (row.getKind() == VariableKind.PARAMETER) {
 				String paramName = functionId.getValue() + id.getValue();
+				row.setTempVarName(paramName);
 				createVariable(paramName, row.getType());
 				int regCount = count.count + 2;
 				if(regCount > 14){

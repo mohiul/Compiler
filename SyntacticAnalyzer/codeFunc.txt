@@ -1,0 +1,13 @@
+func	 sw 	 funca(r0),r2
+	 lw 	 r1,funca(r0)
+	 sub 	 r2,r2,r2
+	 addi 	 r2,r2,1
+	 add 	 r3,r1,r2
+	 sw 	 t3(r0),r3
+
+	 lw 	 r1,t3(r0)
+	 sw 	 funca(r0),r1
+
+	 lw 	 r1,funca(r0)
+	 sw 	 funcres(r0),r1
+	 jr 	 r15

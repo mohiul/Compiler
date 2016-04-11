@@ -1,14 +1,13 @@
-class c{
-	int x;
-	float b[3];
-	float y;
-	c c2; 
-};
 program {
 	int x;
-	c c1[2][2];
+	int y;
+	x = 1;
+	put(x + 45);
+	y = func(x);
+	put(y + 45);
 };
 
-int func() {
-	int i;
+int func(int a){
+	a = a + 1;
+	return (a);
 };

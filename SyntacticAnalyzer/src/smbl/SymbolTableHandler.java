@@ -366,8 +366,10 @@ public class SymbolTableHandler {
 	}
 
 	public SymbolTableRow getVariable(String value) {
-		return currentTableScope.tableRowMap.get(value);
-		
+		SymbolTableRow row = null;
+		if(currentTableScope.tableRowMap.containsKey(value))
+			row = currentTableScope.tableRowMap.get(value);
+		return row;
 	}
 	
 	public SymbolTableRow getFunction(String value) {

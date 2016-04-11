@@ -100,5 +100,13 @@ public class SymbolTableRow {
 		str += " type: " + type.toString();
 		return str;
 	}
+
+	public String getTempVarName() {
+		return tempVarName;
+	}
+
+	public void setTempVarName(String tempVarName) {
+		this.tempVarName = tempVarName;
+	}
 	
 }
