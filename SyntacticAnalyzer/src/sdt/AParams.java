@@ -9,6 +9,7 @@ public class AParams {
 	public Expression expression;
 	public AParamsTails aParamsTails;
 	public Token downId;
+	public Token tempVar;
 	public List<Expression> getExprList() {
 		List<Expression> exprList = new ArrayList<Expression>();
 		Expression expression1 = expression;

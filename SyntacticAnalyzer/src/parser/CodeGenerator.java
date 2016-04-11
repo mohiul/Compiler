@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.util.List;
 
 import lex.Constants;
 import lex.Token;
@@ -412,5 +413,28 @@ public class CodeGenerator {
 				currentProgramWriter = codeWriterProgram;
 			}
 		}
+	}
+
+	public void genCodeFuncCall(Token functionId, List<Expression> exprList, Token tempVarToken) throws IOException {
+		if(secondPass){
+			int r = 2;
+			for(Expression expression: exprList){
+				if(expression.arithExpr != null
+						&& expression.arithExpr.term != null
+						&& expression.arithExpr.term.factor != null){
+					String reg = "r" + r;
+					loadFactorInReg(expression.arithExpr.term.factor, reg);
+				}
+				r++;
+			}
+			currentProgramWriter.write("\t jl \t r15," + functionId.getValue() + "\n");
+			String tempVar = null;
+			tempVar = "t" + tempVarCount++;
+			tempVarToken.setValue(tempVar);
+			tempVarToken.setType(Constants.ID);
+			codeWriterData.write(tempVar + "\t dw \t 0\n");			
+
+			currentProgramWriter.write("\t sw \t " + tempVar + "(r0),r1\n");
+		}		
 	}
 }

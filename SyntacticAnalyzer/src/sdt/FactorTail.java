@@ -13,4 +13,6 @@ public class FactorTail {
 	public IndiceList upIndiceListToCalc;
 
 	public Type upType;
+
+	public Token tempVar;
 }

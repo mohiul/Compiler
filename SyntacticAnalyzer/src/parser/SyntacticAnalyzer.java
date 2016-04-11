@@ -1383,6 +1383,9 @@ public class SyntacticAnalyzer {
 					if(factorTail.upType != null && factorTail.upType.typeName != null){
 						Type.copyType(factor.upType, factorTail.upType);
 					}
+					if(factorTail.tempVar != null){
+						factor.tempVar = factorTail.tempVar;
+					}
 				}
 			} else {
 				error = true;
@@ -1490,6 +1493,9 @@ public class SyntacticAnalyzer {
 					if(factorTail1.upType != null && factorTail1.upType.typeName != null){
 						Type.copyType(factorTail.upType, factorTail1.upType);
 					}
+					if(factorTail1.tempVar != null){
+						factorTail.tempVar = factorTail1.tempVar;
+					}
 				}
 			} else {
 				error = true;
@@ -1515,6 +1521,9 @@ public class SyntacticAnalyzer {
 						if(factorTail.upType == null) factorTail.upType = new Type();
 						Type.copyType(factorTail.upType, factorTail2.upType);
 					}
+					if(factorTail2.tempVar != null){
+						factorTail.tempVar = factorTail2.tempVar;
+					}
 				}
 			} else {
 				error = true;
@@ -1526,7 +1535,12 @@ public class SyntacticAnalyzer {
 			if(match(Constants.OPENPAR) 
 					&& aParams(aParams) 
 					&& match(Constants.CLOSEPAR)){
-				if(secondPass) grammarWriter.write("factorTail -> '(' aParams ')'\n");
+				if(secondPass) {
+					grammarWriter.write("factorTail -> '(' aParams ')'\n");
+					if(aParams.tempVar != null){
+						factorTail.tempVar = aParams.tempVar;						
+					}
+				}
 			} else {
 				error = true;
 			}
@@ -1589,6 +1603,9 @@ public class SyntacticAnalyzer {
 					grammarWriter.write("factorTail2 -> '.' 'id' factorTail\n");
 					if(factorTail.upType != null && factorTail.upType.typeName != null){
 						Type.copyType(factorTail2.upType, factorTail.upType);
+					}
+					if(factorTail.tempVar != null){
+						factorTail2.tempVar = factorTail.tempVar;
 					}
 				}
 			} else {
@@ -1930,10 +1947,15 @@ public class SyntacticAnalyzer {
 			AParamsTails aParamsTails = new AParamsTails();
 			aParams.expression = expression;
 			aParams.aParamsTails = aParamsTails;
+			Token tempVar = new Token();
+			aParams.tempVar = tempVar;
 			if(expr(expression) 
 					&& aParamsTails(aParamsTails)
 					&& tableHandler.checkFuncParams(aParams.downId, aParams.getExprList())){
-				if(secondPass) grammarWriter.write("aParams -> expr aParamsTails\n");
+				if(secondPass){
+					grammarWriter.write("aParams -> expr aParamsTails\n");
+					codeGenerator.genCodeFuncCall(aParams.downId, aParams.getExprList(), tempVar);
+				}
 			} else {
 				error = true;
 			}

@@ -11,4 +11,5 @@ public class FactorTail2 {
 	
 	public FactorTail upFactorTail;
 	public Type upType;
+	public Token tempVar;
 }
