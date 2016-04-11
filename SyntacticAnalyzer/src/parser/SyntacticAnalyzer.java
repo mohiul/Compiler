@@ -394,9 +394,12 @@ public class SyntacticAnalyzer {
 				new String[] { }))
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{ Constants.OPENPAR })) {
+			ConditionCount count = new ConditionCount();
+			count.count = 0;
 			if(match(Constants.OPENPAR) 
 					&& tableHandler.createFunctionEntryAndTable(funcDefTail.type, funcDefTail.id)
-					&& fParams()
+					&& codeGenerator.genCodeCreateFunction(funcDefTail.id)
+					&& fParams(funcDefTail.id, count)
 					&& match(Constants.CLOSEPAR)
 					&& funcBody()
 					&& match(Constants.SEMICOLON)
@@ -488,10 +491,13 @@ public class SyntacticAnalyzer {
 		if(lookAheadIsIn(lookAhead, new String[]{Constants.RESERVED_WORD_INT,
 				Constants.RESERVED_WORD_FLOAT,
 				Constants.ID})){
+			ConditionCount count = new ConditionCount();
+			count.count = 0;
 			if(type(type) && match(Constants.ID, id)
 					&& match(Constants.OPENPAR)
 					&& tableHandler.createFunctionEntryAndTable(type, id)
-					&& fParams()
+					&& codeGenerator.genCodeCreateFunction(id)
+					&& fParams(id, count)
 					&& match(Constants.CLOSEPAR)){
 				if(secondPass) grammarWriter.write("funcHead -> type 'id' '(' fParams ')'\n");
 			} else {
@@ -853,7 +859,7 @@ public class SyntacticAnalyzer {
 					&& match(Constants.SEMICOLON)){
 				if(secondPass){
 					grammarWriter.write("statement -> 'return' '(' expr ')' ';'\n");
-//					TODO Generate code for return
+					codeGenerator.genCodeReturn(expression);
 				}
 			} else {
 				error = true;
@@ -1873,7 +1879,7 @@ public class SyntacticAnalyzer {
 		return !error;
 	}
 	
-	private boolean fParams() throws IOException{
+	private boolean fParams(Token functionId, ConditionCount count) throws IOException{
 		if ( !skipErrors(new String[]{ Constants.RESERVED_WORD_FLOAT,
 				Constants.ID,
 				Constants.RESERVED_WORD_INT }, 
@@ -1889,7 +1895,8 @@ public class SyntacticAnalyzer {
 					&& match(Constants.ID, id)
 					&& arraySizeList(arraySizeList)
 					&& tableHandler.createParameterEntry(type, id, arraySizeList.getArraySizeList())
-					&& fParamsTailList()){
+					&& codeGenerator.genCodeCreateParameter(functionId, id, count)
+					&& fParamsTailList(functionId, count)){
 				if(secondPass) grammarWriter.write("fParams -> type 'id' arraySizeList fParamsTailList\n");
 			} else {
 				error = true;
@@ -1938,12 +1945,12 @@ public class SyntacticAnalyzer {
 		return !error;
 	}
 	
-	private boolean fParamsTailList() throws IOException{
+	private boolean fParamsTailList(Token functionId, ConditionCount count) throws IOException{
 		if ( !skipErrors(new String[]{ Constants.COMMA }, 
 				new String[]{ Constants.CLOSEPAR }) )
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{ Constants.COMMA})) {
-			if(fParamsTail() && fParamsTailList()){
+			if(fParamsTail(functionId, count) && fParamsTailList(functionId, count)){
 				if(secondPass) grammarWriter.write("fParamsTailList -> fParamsTail fParamsTailList\n");
 			} else {
 				error = true;
@@ -1956,7 +1963,7 @@ public class SyntacticAnalyzer {
 		return !error;
 	}
 	
-	private boolean fParamsTail() throws IOException{
+	private boolean fParamsTail(Token functionId, ConditionCount count) throws IOException{
 		if ( !skipErrors(new String[]{ Constants.COMMA }, 
 				new String[]{ }) )
 			return false;
@@ -1968,7 +1975,8 @@ public class SyntacticAnalyzer {
 					&& type(type) 
 					&& match(Constants.ID, id) 
 					&& arraySizeList(arraySizeList) 
-					&& tableHandler.createParameterEntry(type, id, arraySizeList.getArraySizeList())){
+					&& tableHandler.createParameterEntry(type, id, arraySizeList.getArraySizeList())
+					&& codeGenerator.genCodeCreateParameter(functionId, id, count)){
 				if(secondPass) grammarWriter.write("fParamsTail -> ',' type 'id' arraySizeList\n");
 			} else {
 				error = true;

@@ -24,10 +24,13 @@ import smbl.VariableType;
 
 public class CodeGenerator {
 	protected Writer codeWriterData;
+	protected Writer currentProgramWriter;
 	protected Writer codeWriterProgram;
+	protected Writer codeWriterFunction;
 	SymbolTableHandler tableHandler;
 	private String codeDataFileName;
 	private String codeProgramFileName;
+	private String codeFuncFileName;
 	private String codeFileName;
 	boolean secondPass;
 	int tempVarCount;
@@ -35,6 +38,7 @@ public class CodeGenerator {
 	int endandCount;
 	int ifCount;
 	int forCount;
+	int funcCount;
 	
 	public CodeGenerator(){
 		secondPass = false;
@@ -45,84 +49,95 @@ public class CodeGenerator {
 		secondPass = false;
 		codeDataFileName = "codeData.txt";
 		codeProgramFileName = "codeProgram.txt";
+		codeFuncFileName = "codeFunc.txt";
 		this.codeFileName = codeFilename;
 		this.tableHandler = tableHandler;
 		codeWriterData = new BufferedWriter(new OutputStreamWriter(
 				new FileOutputStream(codeDataFileName), "utf-8"));
 		codeWriterProgram = new BufferedWriter(new OutputStreamWriter(
 				new FileOutputStream(codeProgramFileName), "utf-8"));
+		currentProgramWriter = codeWriterProgram;
+		codeWriterFunction = new BufferedWriter(new OutputStreamWriter(
+				new FileOutputStream(codeFuncFileName), "utf-8"));
 		tempVarCount = 0;
 		zeroCount = 0;
 		endandCount = 0;
 		ifCount = 0;
 		forCount = 0;
+		funcCount = 0;
 	}
 
 	public void closeWriter() throws IOException {
 		if(secondPass){
 			if(codeWriterData != null) codeWriterData.close();
+			if(codeWriterFunction != null) codeWriterFunction.close();
 			if(codeWriterProgram != null) codeWriterProgram.close();
 			
-			codeWriterProgram = new BufferedWriter(new OutputStreamWriter(
+			currentProgramWriter = new BufferedWriter(new OutputStreamWriter(
 					new FileOutputStream(codeFileName), "utf-8"));
 			
-			codeWriterProgram.write("\t entry\n");
+			currentProgramWriter.write("\t entry\n");
 			BufferedReader br = new BufferedReader(new FileReader(codeProgramFileName));
 			String line = null;
 			while ((line = br.readLine()) != null) {
-				codeWriterProgram.write(line + "\n");
+				currentProgramWriter.write(line + "\n");
 			}
-			codeWriterProgram.write("\t hlt\n");
-			codeWriterProgram.write("\n");
+			currentProgramWriter.write("\t hlt\n");
+			currentProgramWriter.write("\n");
+			br = new BufferedReader(new FileReader(codeFuncFileName));
+			while ((line = br.readLine()) != null) {
+				currentProgramWriter.write(line + "\n");
+			}
 			br = new BufferedReader(new FileReader(codeDataFileName));
 			while ((line = br.readLine()) != null) {
-				codeWriterProgram.write(line + "\n");
+				currentProgramWriter.write(line + "\n");
 			}
-			codeWriterProgram.close();
+			currentProgramWriter.close();
 		}
 	}
 	
 	public void genCodeCreateVariable(Token id) throws IOException {
 		SymbolTableRow row = tableHandler.getVariable(id.getValue());
 		if (row.getKind() == VariableKind.VARIABLE) {
-			VariableType varType = row.getType();
-			if (varType.getTypeName().equalsIgnoreCase(Constants.RESERVED_WORD_INT)) {
-				int[] dimArr = varType.getDimension();
-				if (dimArr == null || dimArr.length == 0) {
-					codeWriterData.write(row.getVarName() + "\tdw 0\n");
-				} else {
-					int i = 0;
-					int dim = dimArr[i++];
-					while (i < dimArr.length) {
-						dim *= dimArr[i++];
-					}
-					codeWriterData.write(row.getVarName() + "\tres " + dim + "\n");
+			createVariable(row.getVarName(), row.getType());
+		}
+	}
+
+	private void createVariable(String varName, VariableType varType) throws IOException {
+		if (varType.getTypeName().equalsIgnoreCase(Constants.RESERVED_WORD_INT)) {
+			int[] dimArr = varType.getDimension();
+			if (dimArr == null || dimArr.length == 0) {
+				codeWriterData.write(varName + "\tdw 0\n");
+			} else {
+				int i = 0;
+				int dim = dimArr[i++];
+				while (i < dimArr.length) {
+					dim *= dimArr[i++];
 				}
+				codeWriterData.write(varName + "\tres " + dim + "\n");
 			}
-		} else {
-			System.err.println("Variable " + row.getVarName() + " TypeList should be > 0");
 		}
 	}
 
 	public void genCodeAssignment(Token id, Token token) throws IOException {
 		if(token.getType().equalsIgnoreCase(Constants.INTEGERNUM)){
-			codeWriterProgram.write("\t sub \t r1,r1,r1\n");
-			codeWriterProgram.write("\t addi \t r1,r1," + token.getValue() + "\n");
-			codeWriterProgram.write("\t sw \t " + id.getValue() + "(r0),r1\n");
+			currentProgramWriter.write("\t sub \t r1,r1,r1\n");
+			currentProgramWriter.write("\t addi \t r1,r1," + token.getValue() + "\n");
+			currentProgramWriter.write("\t sw \t " + id.getValue() + "(r0),r1\n");
 		} else if(token.getType().equalsIgnoreCase(Constants.ID)){
-			codeWriterProgram.write("\t lw \t r1," + token.getValue() + "(r0)\n");
-			codeWriterProgram.write("\t sw \t " + id.getValue() + "(r0),r1\n");
+			currentProgramWriter.write("\t lw \t r1," + token.getValue() + "(r0)\n");
+			currentProgramWriter.write("\t sw \t " + id.getValue() + "(r0),r1\n");
 //			lw r1,b(r0)
 //			sw a(r0),r1
 		}
-		codeWriterProgram.write("\n");
+		currentProgramWriter.write("\n");
 		
 	}
 
 	public void genCodeNotOperation(Factor f1, Token not) throws IOException {
 		loadFactorInReg(f1, "r1");
 		if(not.getValue().equalsIgnoreCase(Constants.RESERVED_WORD_NOT)){
-			codeWriterProgram.write("\t not \t r3,r1\n");
+			currentProgramWriter.write("\t not \t r3,r1\n");
 			conditionalBranch(createTempVar(f1, new Factor()));
 		}
 	}
@@ -132,19 +147,19 @@ public class CodeGenerator {
 		loadFactorInReg(f2, "r2");		
 		
 		if(op.getType().equalsIgnoreCase(Constants.PLUS)){
-			codeWriterProgram.write("\t add \t r3,r1,r2\n");
+			currentProgramWriter.write("\t add \t r3,r1,r2\n");
 		} else if(op.getType().equalsIgnoreCase(Constants.MINUS)){
-			codeWriterProgram.write("\t sub \t r3,r1,r2\n");
+			currentProgramWriter.write("\t sub \t r3,r1,r2\n");
 		} else if(op.getType().equalsIgnoreCase(Constants.MULTIPLY)){
-			codeWriterProgram.write("\t mul \t r3,r1,r2\n");
+			currentProgramWriter.write("\t mul \t r3,r1,r2\n");
 		} else if(op.getType().equalsIgnoreCase(Constants.DIV)){
-			codeWriterProgram.write("\t div \t r3,r1,r2\n");
+			currentProgramWriter.write("\t div \t r3,r1,r2\n");
 		} else if(op.getType().equalsIgnoreCase(Constants.DIV)){
-			codeWriterProgram.write("\t div \t r3,r1,r2\n");
+			currentProgramWriter.write("\t div \t r3,r1,r2\n");
 		} else if(op.getValue().equalsIgnoreCase(Constants.RESERVED_WORD_AND)){
-			codeWriterProgram.write("\t and \t r3,r1,r2\n");
+			currentProgramWriter.write("\t and \t r3,r1,r2\n");
 		} else if(op.getValue().equalsIgnoreCase(Constants.RESERVED_WORD_OR)){
-			codeWriterProgram.write("\t or \t r3,r1,r2\n");
+			currentProgramWriter.write("\t or \t r3,r1,r2\n");
 		}
 		
 		String tempVar = createTempVar(f1, f2);
@@ -152,20 +167,20 @@ public class CodeGenerator {
 				|| op.getValue().equalsIgnoreCase(Constants.RESERVED_WORD_OR)){
 			conditionalBranch(tempVar);
 		} else {
-			codeWriterProgram.write("\t sw \t " + tempVar + "(r0),r3\n");			
+			currentProgramWriter.write("\t sw \t " + tempVar + "(r0),r3\n");			
 		}
-		codeWriterProgram.write("\n");
+		currentProgramWriter.write("\n");
 	}
 
 	private void conditionalBranch(String tempVar) throws IOException {
 		String zero = "zero" + (zeroCount++);
-		codeWriterProgram.write("\t bz \t r3," + zero + "\n");
-		codeWriterProgram.write("\t addi \t r1,r0,1\n");
-		codeWriterProgram.write("\t sw \t " + tempVar + "(r0),r1\n");
+		currentProgramWriter.write("\t bz \t r3," + zero + "\n");
+		currentProgramWriter.write("\t addi \t r1,r0,1\n");
+		currentProgramWriter.write("\t sw \t " + tempVar + "(r0),r1\n");
 		String endand = "endand" + (endandCount++);
-		codeWriterProgram.write("\t j \t " + endand + "\n");
-		codeWriterProgram.write(zero + "\t sw \t " + tempVar + "(r0), r0\n");
-		codeWriterProgram.write(endand + "\n");
+		currentProgramWriter.write("\t j \t " + endand + "\n");
+		currentProgramWriter.write(zero + "\t sw \t " + tempVar + "(r0), r0\n");
+		currentProgramWriter.write(endand + "\n");
 	}
 	
 	private String createTempVar(Factor f1, Factor f2) throws IOException {
@@ -190,22 +205,22 @@ public class CodeGenerator {
 		loadFactorInReg(f2, "r2");		
 		
 		if(op.getType().equalsIgnoreCase(Constants.EQCOMP)){
-			codeWriterProgram.write("\t ceq \t r3,r1,r2\n");
+			currentProgramWriter.write("\t ceq \t r3,r1,r2\n");
 		} else if(op.getType().equalsIgnoreCase(Constants.NOTEQ)){
-			codeWriterProgram.write("\t cne \t r3,r1,r2\n");
+			currentProgramWriter.write("\t cne \t r3,r1,r2\n");
 		} else if(op.getType().equalsIgnoreCase(Constants.LT)){
-			codeWriterProgram.write("\t clt \t r3,r1,r2\n");
+			currentProgramWriter.write("\t clt \t r3,r1,r2\n");
 		} else if(op.getType().equalsIgnoreCase(Constants.LESSEQ)){
-			codeWriterProgram.write("\t cle \t r3,r1,r2\n");
+			currentProgramWriter.write("\t cle \t r3,r1,r2\n");
 		} else if(op.getType().equalsIgnoreCase(Constants.GT)){
-			codeWriterProgram.write("\t cgt \t r3,r1,r2\n");
+			currentProgramWriter.write("\t cgt \t r3,r1,r2\n");
 		} else if(op.getType().equalsIgnoreCase(Constants.GREATEQ)){
-			codeWriterProgram.write("\t cge \t r3,r1,r2\n");
+			currentProgramWriter.write("\t cge \t r3,r1,r2\n");
 		}
 		String tempVar = "t" + tempVarCount++;
 		codeWriterData.write(tempVar + "\t dw \t 0\n");			
-		codeWriterProgram.write("\t sw \t " + tempVar + "(r0),r3\n");
-		codeWriterProgram.write("\n");
+		currentProgramWriter.write("\t sw \t " + tempVar + "(r0),r3\n");
+		currentProgramWriter.write("\n");
 		Token tempT = new Token();
 		tempT.setValue(tempVar);
 		tempT.setType(Constants.ID);
@@ -214,14 +229,14 @@ public class CodeGenerator {
 
 	private void loadFactorInReg(Factor f1, String reg) throws IOException {
 		if(f1.tempVar != null){
-			codeWriterProgram.write("\t lw \t " + reg + "," + f1.tempVar.getValue() + "(r0)\n");			
+			currentProgramWriter.write("\t lw \t " + reg + "," + f1.tempVar.getValue() + "(r0)\n");			
 		} else if(f1.upNum != null){
 			if(f1.upNum.getType().equalsIgnoreCase(Constants.INTEGERNUM)){
-				codeWriterProgram.write("\t sub \t " + reg + "," + reg + "," + reg + "\n");
-				codeWriterProgram.write("\t addi \t " + reg + "," + reg + "," + f1.upNum.getValue() + "\n");			
+				currentProgramWriter.write("\t sub \t " + reg + "," + reg + "," + reg + "\n");
+				currentProgramWriter.write("\t addi \t " + reg + "," + reg + "," + f1.upNum.getValue() + "\n");			
 			}
 		} else if(f1.upId != null){
-			codeWriterProgram.write("\t lw \t " + reg + "," + f1.upId.getValue() + "(r0)\n");			
+			currentProgramWriter.write("\t lw \t " + reg + "," + f1.upId.getValue() + "(r0)\n");			
 		}
 	}
 
@@ -233,8 +248,8 @@ public class CodeGenerator {
 				loadFactorInReg(expression.arithExpr.term.factor, "r1");
 				cond.count = ifCount;
 				String elseStr = "else" + (ifCount++);
-				codeWriterProgram.write("\t bz \t r1, " + elseStr + "\n");
-				codeWriterProgram.write("\n");
+				currentProgramWriter.write("\t bz \t r1, " + elseStr + "\n");
+				currentProgramWriter.write("\n");
 			}
 		}
 		return true;
@@ -243,15 +258,15 @@ public class CodeGenerator {
 	public boolean genCodeIfCondElse(ConditionCount cond) throws IOException {
 		if(secondPass){
 			String endif = "endif" + cond.count;
-			codeWriterProgram.write("\t j \t " + endif + "\n");
-			codeWriterProgram.write("else" + cond.count + " \t \n");
+			currentProgramWriter.write("\t j \t " + endif + "\n");
+			currentProgramWriter.write("else" + cond.count + " \t \n");
 		}
 		return true;
 	}
 
 	public boolean genCodeEndIf(ConditionCount cond) throws IOException {
 		if(secondPass){
-			codeWriterProgram.write("endif" + cond.count + " \t \n");
+			currentProgramWriter.write("endif" + cond.count + " \t \n");
 		}
 		return true;
 	}
@@ -277,7 +292,7 @@ public class CodeGenerator {
 				}
 			}
 			condition.count = forCount++;
-			codeWriterProgram.write("gofor" + condition.count + " \t \n");
+			currentProgramWriter.write("gofor" + condition.count + " \t \n");
 		}
 		return true;
 	}
@@ -300,9 +315,9 @@ public class CodeGenerator {
 			}
 			loadFactorInReg(f1, "r1");
 			String elseStr = "endfor" + condition.count;
-			codeWriterProgram.write("\t bz \t r1, " + elseStr + "\n");
-			codeWriterProgram.write("\t j \t " + "forstat" + condition.count + "\n");
-			codeWriterProgram.write("goforIncr" + condition.count + " \t \n");
+			currentProgramWriter.write("\t bz \t r1, " + elseStr + "\n");
+			currentProgramWriter.write("\t j \t " + "forstat" + condition.count + "\n");
+			currentProgramWriter.write("goforIncr" + condition.count + " \t \n");
 
 		}
 		return true;
@@ -310,16 +325,16 @@ public class CodeGenerator {
 
 	public boolean genCodeForEnd(ConditionCount condition) throws IOException {
 		if(secondPass){
-			codeWriterProgram.write("\t j \t " + "goforIncr" + condition.count + "\n");
-			codeWriterProgram.write("endfor" + condition.count + " \t \n");
+			currentProgramWriter.write("\t j \t " + "goforIncr" + condition.count + "\n");
+			currentProgramWriter.write("endfor" + condition.count + " \t \n");
 		}
 		return true;
 	}
 
 	public boolean genCodeForIncr(ConditionCount condition) throws IOException {
 		if(secondPass){
-			codeWriterProgram.write("\t j \t " + "gofor" + condition.count + "\n");
-			codeWriterProgram.write("forstat" + condition.count + " \t \n");
+			currentProgramWriter.write("\t j \t " + "gofor" + condition.count + "\n");
+			currentProgramWriter.write("forstat" + condition.count + " \t \n");
 		}
 		return true;
 	}
@@ -330,7 +345,7 @@ public class CodeGenerator {
 					&& expression.arithExpr.term != null
 					&& expression.arithExpr.term.factor != null){
 				loadFactorInReg(expression.arithExpr.term.factor, "r1");
-				codeWriterProgram.write("\t putc \t r1\n");
+				currentProgramWriter.write("\t putc \t r1\n");
 			}
 		}
 	}
@@ -339,10 +354,54 @@ public class CodeGenerator {
 		if(secondPass){
 			if(variable.upIdnest != null
 					&& variable.upIdnest.id != null){
-				codeWriterProgram.write("\t getc \t r1\n");
-				codeWriterProgram.write("\t sw \t " + variable.upIdnest.id.getValue() + "(r0),r1\n");
-				codeWriterProgram.write("\n");
+				currentProgramWriter.write("\t getc \t r1\n");
+				currentProgramWriter.write("\t sw \t " + variable.upIdnest.id.getValue() + "(r0),r1\n");
+				currentProgramWriter.write("\n");
 			}
 		}		
+	}
+
+	public boolean genCodeCreateFunction(Token id) throws IOException {
+		if(secondPass){
+			SymbolTableRow row = tableHandler.getFunction(id.getValue());
+			if (row.getKind() == VariableKind.FUNCTION) {
+				String funcName = row.getVarName() + "res";
+				createVariable(funcName, row.getType());
+				currentProgramWriter = codeWriterFunction;
+			}
+		}
+		return true;
+	}
+
+	public boolean genCodeCreateParameter(Token functionId, Token id, ConditionCount count) throws IOException {
+		if(secondPass){
+			SymbolTableRow row = tableHandler.getVariable(id.getValue());
+			if (row.getKind() == VariableKind.PARAMETER) {
+				String paramName = functionId.getValue() + id.getValue();
+				createVariable(paramName, row.getType());
+				int regCount = count.count + 2;
+				String instr = "\t sw \t " + paramName + "(r0),r" + regCount + "\n";
+				if(count.count == 0){
+					instr = functionId.getValue() + instr;
+				}
+				codeWriterFunction.write(instr);
+				count.count++;
+			}
+		}
+		return true;
+	}
+
+	public void genCodeReturn(Expression expression) throws IOException {
+		if(secondPass){
+			if(expression.arithExpr != null
+					&& expression.arithExpr.term != null
+					&& expression.arithExpr.term.factor != null){
+				String funcName = tableHandler.currentFunctionName();
+				loadFactorInReg(expression.arithExpr.term.factor, "r1");
+				currentProgramWriter.write("\t sw \t " + funcName + "res(r0),r1\n");
+				currentProgramWriter.write("\t jr \t r15\n");
+				currentProgramWriter = codeWriterProgram;
+			}
+		}
 	}
 }

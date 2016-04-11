@@ -1,6 +1,7 @@
 program {
 	int x;
 	x = 1;
-	get(x);
-	put(x + 1);
+};
+int func(int i, int j){
+	return (1);
 };

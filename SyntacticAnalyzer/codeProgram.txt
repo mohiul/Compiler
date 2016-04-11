@@ -1,3 +1,4 @@
-	 getc 	 r1
-	 sw 	 id(r0),r1
+	 sub 	 r1,r1,r1
+	 addi 	 r1,r1,1
+	 sw 	 x(r0),r1
 

@@ -365,6 +365,16 @@ public class SymbolTableHandler {
 		return currentTableScope.tableRowMap.get(value);
 		
 	}
+	
+	public SymbolTableRow getFunction(String value) {
+		SymbolTableRow row = null;
+		if(existsInClassTableScope(value)){
+			row = classTableScope.tableRowMap.get(value);			
+		} else if(functionInGlobalTableExists(value)){
+			row = globalTable.tableRowMap.get(value);
+		}
+		return row;
+	}
 
 	public boolean checkCompatableType(Type type1, Type type2, Token multOp) throws IOException {
 		boolean toReturn = false;
@@ -447,5 +457,9 @@ public class SymbolTableHandler {
 			toReturn = true;
 		}
 		return toReturn;
+	}
+
+	public String currentFunctionName() {
+		return currentTableScope.getTableName();
 	}
 }
