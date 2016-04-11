@@ -1,8 +1,4 @@
-x	dw 0
-y	dw 0
+z	dw 0
+y	res 1
 t0	 dw 	 0
 t1	 dw 	 0
-t2	 dw 	 0
-funcres	dw 0
-funca	dw 0
-t3	 dw 	 0

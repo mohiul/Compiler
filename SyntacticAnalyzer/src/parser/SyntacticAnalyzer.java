@@ -383,7 +383,7 @@ public class SyntacticAnalyzer {
 					grammarWriter.write("varDefTail	-> arraySizeList ';'\n");
 					if(varDefTail.classToken == null 
 							|| !varDefTail.classToken.getValue().equalsIgnoreCase(Constants.RESERVED_WORD_CLASS)){
-						codeGenerator.genCodeCreateVariable(varDefTail.id);
+						codeGenerator.genCodeCreateVariable(varDefTail.id, false);
 					}
 				}
 			} else {
@@ -662,10 +662,12 @@ public class SyntacticAnalyzer {
 					&& tableHandler.createVariableEntry(varDeclTail.type, id, arraySizeList.getArraySizeList())){
 				if(secondPass){
 					grammarWriter.write("varDeclTail -> id arraySizeList ;\n");
-//					if(varDeclTail.program != null 
-//							&& varDeclTail.program.getValue().equalsIgnoreCase(Constants.RESERVED_WORD_PROGRAM)){
-						codeGenerator.genCodeCreateVariable(id);
-//					}
+					if(varDeclTail.program != null 
+							&& varDeclTail.program.getValue().equalsIgnoreCase(Constants.RESERVED_WORD_PROGRAM)){
+						codeGenerator.genCodeCreateVariable(id, false);
+					} else {
+						codeGenerator.genCodeCreateVariable(id, true);
+					}
 				}
 			} else {
 				error = true;
@@ -703,11 +705,18 @@ public class SyntacticAnalyzer {
 								&& expression.arithExpr.term != null
 								&& expression.arithExpr.term.factor != null){
 							if(expression.arithExpr.term.factor.tempVar != null){
-								codeGenerator.genCodeAssignment(variableTail1.id, expression.arithExpr.term.factor.tempVar);
+								codeGenerator.genCodeAssignment(variableTail1.id, 
+										variableTail1.indiceList, 
+										expression.arithExpr.term.factor.tempVar, null);
 							} else if(expression.arithExpr.term.factor.upNum != null){
-								codeGenerator.genCodeAssignment(variableTail1.id, expression.arithExpr.term.factor.upNum);
+								codeGenerator.genCodeAssignment(variableTail1.id,
+										variableTail1.indiceList,
+										expression.arithExpr.term.factor.upNum, null);
 							} else if(expression.arithExpr.term.factor.upId != null){
-								codeGenerator.genCodeAssignment(variableTail1.id, expression.arithExpr.term.factor.upId);
+								codeGenerator.genCodeAssignment(variableTail1.id,
+										variableTail1.indiceList,
+										expression.arithExpr.term.factor.upId,
+										expression.arithExpr.term.factor.upIdicesList);
 							} 
 						}
 						
@@ -743,6 +752,7 @@ public class SyntacticAnalyzer {
 					if(variableTail2.upType != null && variableTail2.upType.typeName != null){
 						Type.copyType(variableTail1.upType, variableTail2.upType);
 					}
+					variableTail1.indiceList = indiceList;
 				}
 			} else {
 				error = true;
@@ -993,11 +1003,18 @@ public class SyntacticAnalyzer {
 								&& expression.arithExpr.term != null
 								&& expression.arithExpr.term.factor != null){
 							if(expression.arithExpr.term.factor.tempVar != null){
-								codeGenerator.genCodeAssignment(variable.upIdnest.id, expression.arithExpr.term.factor.tempVar);
+								codeGenerator.genCodeAssignment(variable.upIdnest.id,
+										variable.upIdnest.indiceList,
+										expression.arithExpr.term.factor.tempVar, null);
 							} else if(expression.arithExpr.term.factor.upNum != null){
-								codeGenerator.genCodeAssignment(variable.upIdnest.id, expression.arithExpr.term.factor.upNum);
+								codeGenerator.genCodeAssignment(variable.upIdnest.id, 
+										variable.upIdnest.indiceList, 
+										expression.arithExpr.term.factor.upNum, null);
 							} else if(expression.arithExpr.term.factor.upId != null){
-								codeGenerator.genCodeAssignment(variable.upIdnest.id, expression.arithExpr.term.factor.upId);
+								codeGenerator.genCodeAssignment(variable.upIdnest.id, 
+										variable.upIdnest.indiceList, 
+										expression.arithExpr.term.factor.upId,
+										expression.arithExpr.term.factor.upIdicesList);
 							}
 						}
 					}
@@ -1397,6 +1414,9 @@ public class SyntacticAnalyzer {
 					}
 					if(factorTail.tempVar != null){
 						factor.tempVar = factorTail.tempVar;
+					}
+					if(factorTail.upIndiceListToCalc != null){
+						factor.upIdicesList = factorTail.upIndiceListToCalc;
 					}
 				}
 			} else {

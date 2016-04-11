@@ -6,6 +6,7 @@ public class Factor {
 	public Token tempVar;
 	public Type upType;
 	public Token upId;
+	public IndiceList upIdicesList;
 	public FactorTail factorTail;
 	public Token upNum;
 	public ArithExpr upArithExpr;	

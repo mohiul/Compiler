@@ -15,6 +15,8 @@ import lex.Constants;
 import lex.Token;
 import sdt.Expression;
 import sdt.Factor;
+import sdt.Idnest;
+import sdt.IndiceList;
 import sdt.Variable;
 import sdt.ArithExpr;
 import sdt.ConditionCount;
@@ -42,6 +44,7 @@ public class CodeGenerator {
 	int ifCount;
 	int forCount;
 	int funcCount;
+	int regCount;
 	
 	public CodeGenerator(){
 		secondPass = false;
@@ -68,6 +71,7 @@ public class CodeGenerator {
 		ifCount = 0;
 		forCount = 0;
 		funcCount = 0;
+		regCount = 0;
 	}
 
 	public void closeWriter() throws IOException {
@@ -99,10 +103,15 @@ public class CodeGenerator {
 		}
 	}
 	
-	public void genCodeCreateVariable(Token id) throws IOException {
-		SymbolTableRow row = tableHandler.getVariable(id.getValue());
+	public void genCodeCreateVariable(Token id, boolean addFuncName) throws IOException {
+		SymbolTableRow row = tableHandler.getVariable(id.getValue());		
 		if (row.getKind() == VariableKind.VARIABLE) {
-			createVariable(row.getVarName(), row.getType());
+			String varName = row.getVarName();
+			if(addFuncName){
+				varName = tableHandler.getVariableScope(id.getValue()) + varName;
+				row.setTempVarName(varName);
+			}
+			createVariable(varName, row.getType());
 		}
 	}
 
@@ -171,19 +180,60 @@ public class CodeGenerator {
 		return dim;
 	}
 
-	public void genCodeAssignment(Token id, Token token) throws IOException {
+	public void genCodeAssignment(Token id, IndiceList indiceList1, Token token, IndiceList indiceList2) throws IOException {
 		if(token.getType().equalsIgnoreCase(Constants.INTEGERNUM)){
-			currentProgramWriter.write("\t sub \t r1,r1,r1\n");
-			currentProgramWriter.write("\t addi \t r1,r1," + token.getValue() + "\n");
-			currentProgramWriter.write("\t sw \t " + id.getValue() + "(r0),r1\n");
+			regCount = 3;
+			currentProgramWriter.write("\t sub \t r" + regCount + ",r" + regCount + ",r" + regCount + "\n");
+			currentProgramWriter.write("\t addi \t r" + regCount + ",r" + regCount + "," + token.getValue() + "\n");
+			storeInIdFromReg(id, indiceList1, "r" + regCount + "");
 		} else if(token.getType().equalsIgnoreCase(Constants.ID)){
-			currentProgramWriter.write("\t lw \t r1," + checkTempVarName(token.getValue()) + "(r0)\n");
-			currentProgramWriter.write("\t sw \t " + checkTempVarName(id.getValue()) + "(r0),r1\n");
-//			lw r1,b(r0)
-//			sw a(r0),r1
+			loadIdIntoRegister(token, indiceList2, "r" + regCount + "");
+			storeInIdFromReg(id, indiceList1, "r" + regCount + "");
 		}
 		currentProgramWriter.write("\n");
 		
+	}
+
+	private void storeInIdFromReg(Token id, IndiceList indiceList, String reg) throws IOException {
+		if(indiceList != null && indiceList.indice != null){
+			loadFactorToR0(indiceList.indice.arithExpr.term.factor);
+			currentProgramWriter.write("\t sw \t " + checkTempVarName(id.getValue()) + "(r0)," + reg + "\n");
+		} else {
+			currentProgramWriter.write("\t sw \t " + checkTempVarName(id.getValue()) + "(r0)," + reg + "\n");
+		}
+	}
+
+	private void loadIdIntoRegister(Token id, IndiceList indiceList, String reg) throws IOException {
+		if(indiceList != null && indiceList.indice != null){
+			loadFactorToR0(indiceList.indice.arithExpr.term.factor);
+			currentProgramWriter.write("\t lw \t " + reg + "," + checkTempVarName(id.getValue()) + "(r0)\n");
+		} else {
+			currentProgramWriter.write("\t lw \t " + reg + "," + checkTempVarName(id.getValue()) + "(r0)\n");
+		}
+	}
+
+	private void loadFactorToR0(Factor factor) throws IOException {
+		if(factor.tempVar != null){
+			currentProgramWriter.write("\t lw \t r2," + factor.tempVar.getValue() + "(r0)\n");
+			currentProgramWriter.write("\t sub \t r1,r1,r1\n");
+			currentProgramWriter.write("\t add \t r0,r1,r2\n");
+		} else if(factor.upNum != null){
+			currentProgramWriter.write("\t sub \t r1,r1,r1\n");
+			currentProgramWriter.write("\t addi \t r0,r1," + factor.upNum.getValue() + "\n");
+		} else if(factor.upId != null){
+			regCount++;
+			if(regCount > 14){
+				String errMsg = "Code Generation Error: Number of registers exceeded 14 at line: " 
+						+ factor.upId.getLineNo()
+						+ " position: " 
+						+ factor.upId.getPositionInLine();
+				tableHandler.getErrWriter().write(errMsg + "\n");
+				System.err.println(errMsg);
+			}
+			loadIdIntoRegister(factor.upId, factor.upIdicesList, "r" + regCount);
+			currentProgramWriter.write("\t sub \t r1,r1,r1\n");
+			currentProgramWriter.write("\t add \t r0,r1,r" + regCount + "\n");
+		}
 	}
 
 	private String checkTempVarName(String tokenValue) {
@@ -337,17 +387,18 @@ public class CodeGenerator {
 
 	public boolean genCodeForDecl(Token id, Expression expression, ConditionCount condition) throws IOException {
 		if(secondPass){
-			genCodeCreateVariable(id);
+			genCodeCreateVariable(id, false);
 			if(id != null){
 				if(expression.arithExpr != null
 						&& expression.arithExpr.term != null
 						&& expression.arithExpr.term.factor != null){
 					if(expression.arithExpr.term.factor.tempVar != null){
-						genCodeAssignment(id, expression.arithExpr.term.factor.tempVar);
+						genCodeAssignment(id, null, expression.arithExpr.term.factor.tempVar, null);
 					} else if(expression.arithExpr.term.factor.upNum != null){
-						genCodeAssignment(id, expression.arithExpr.term.factor.upNum);
+						genCodeAssignment(id, null, expression.arithExpr.term.factor.upNum, null);
 					} else if(expression.arithExpr.term.factor.upId != null){
-						genCodeAssignment(id, expression.arithExpr.term.factor.upId);
+						genCodeAssignment(id, null, expression.arithExpr.term.factor.upId,
+								expression.arithExpr.term.factor.upIdicesList);
 					}
 				}
 			}

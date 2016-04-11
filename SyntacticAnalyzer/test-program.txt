@@ -1,13 +1,9 @@
 program {
-	int x;
-	int y;
-	x = 1;
-	put(x + 45);
-	y = func(x);
-	put(y + 45);
-};
-
-int func(int a){
-	a = a + 1;
-	return (a);
+	int z;
+	int y[1];
+	z = 1;
+	put(1 + 45);
+	y[y[z]] = 1;
+	put(y[y[z]] + 45);
+	
 };

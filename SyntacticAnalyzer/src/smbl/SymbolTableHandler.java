@@ -372,6 +372,13 @@ public class SymbolTableHandler {
 		return row;
 	}
 	
+	public String getVariableScope(String value) {
+		String scope = "";
+		if(currentTableScope.tableRowMap.containsKey(value))
+			scope = currentTableScope.getTableName();
+		return scope;
+	}
+	
 	public SymbolTableRow getFunction(String value) {
 		SymbolTableRow row = null;
 		if(existsInClassTableScope(value)){
