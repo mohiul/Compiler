@@ -380,6 +380,15 @@ public class CodeGenerator {
 				String paramName = functionId.getValue() + id.getValue();
 				createVariable(paramName, row.getType());
 				int regCount = count.count + 2;
+				if(regCount > 14){
+					String errMsg = "Number of parameters cannot be more than 14 at line: " 
+							+ id.getLineNo()  
+							+ " position: " 
+							+ id.getPositionInLine();
+					tableHandler.getErrWriter().write(errMsg + "\n");
+					System.err.println(errMsg);
+					return false;
+				}
 				String instr = "\t sw \t " + paramName + "(r0),r" + regCount + "\n";
 				if(count.count == 0){
 					instr = functionId.getValue() + instr;

@@ -462,4 +462,9 @@ public class SymbolTableHandler {
 	public String currentFunctionName() {
 		return currentTableScope.getTableName();
 	}
+	
+	public Writer getErrWriter() {
+		return errWriter;
+	}
+
 }
