@@ -1,8 +1,14 @@
+class c{
+	int x;
+	float b[3];
+	float y;
+	c c2; 
+};
 program {
 	int x;
-	x = 1;
-	x = func(x);
+	c c1;
 };
-int func(int y){
-	return (1);
+
+int func() {
+	int i;
 };

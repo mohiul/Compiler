@@ -18,6 +18,7 @@ import sdt.Factor;
 import sdt.Variable;
 import sdt.ArithExpr;
 import sdt.ConditionCount;
+import smbl.SymbolTable;
 import smbl.SymbolTableHandler;
 import smbl.SymbolTableRow;
 import smbl.VariableKind;
@@ -34,6 +35,7 @@ public class CodeGenerator {
 	private String codeFuncFileName;
 	private String codeFileName;
 	boolean secondPass;
+	final int floatSize = 2;
 	int tempVarCount;
 	int zeroCount;
 	int endandCount;
@@ -105,19 +107,63 @@ public class CodeGenerator {
 	}
 
 	private void createVariable(String varName, VariableType varType) throws IOException {
+		int dim = getTotalDimSize(varType.getDimension());
 		if (varType.getTypeName().equalsIgnoreCase(Constants.RESERVED_WORD_INT)) {
-			int[] dimArr = varType.getDimension();
-			if (dimArr == null || dimArr.length == 0) {
+			if (dim == 0) {
 				codeWriterData.write(varName + "\tdw 0\n");
-			} else {
-				int i = 0;
-				int dim = dimArr[i++];
-				while (i < dimArr.length) {
-					dim *= dimArr[i++];
-				}
+			} else if(dim > 0){
+				codeWriterData.write(varName + "\tres " + dim + "\n");
+			}
+		}else if (varType.getTypeName().equalsIgnoreCase(Constants.RESERVED_WORD_FLOAT)) {
+			if (dim == 0) {
+				codeWriterData.write(varName + "\tres " + floatSize + "\n");
+			} else if(dim > 0){
+				codeWriterData.write(varName + "\tres " + dim*floatSize + "\n");
+			}
+		} else {
+			dim = getTotalClassSize(varType.getTypeName());
+			if (dim == 0) {
+				codeWriterData.write(varName + "\tdw 0\n");
+			} else if(dim > 0){
 				codeWriterData.write(varName + "\tres " + dim + "\n");
 			}
 		}
+	}
+
+	private int getTotalClassSize(String varTypeName) throws IOException {
+		int totalDim = 0;
+		SymbolTable table = tableHandler.getClass(varTypeName).getLink();
+		for(String key : table.tableRowMap.keySet()){
+			VariableType varType = table.tableRowMap.get(key).getType();
+			if (varType.getTypeName().equalsIgnoreCase(Constants.RESERVED_WORD_INT)) {
+				int dim = getTotalDimSize(varType.getDimension());
+				if(dim > 0){
+					totalDim += dim;
+				} else {
+					totalDim ++;					
+				}
+			}else if (varType.getTypeName().equalsIgnoreCase(Constants.RESERVED_WORD_FLOAT)) {
+				int dim = getTotalDimSize(varType.getDimension());
+				if(dim > 0){
+					totalDim += dim*floatSize;
+				} else {
+					totalDim += floatSize;
+				}
+			}
+		}
+		return totalDim;
+	}
+
+	private int getTotalDimSize(int[] dimArr) {
+		int i = 0;
+		int dim = 0;
+		if (dimArr != null && dimArr.length > 0) {
+			dim = dimArr[i++];
+			while (i < dimArr.length) {
+				dim *= dimArr[i++];
+			}
+		}
+		return dim;
 	}
 
 	public void genCodeAssignment(Token id, Token token) throws IOException {

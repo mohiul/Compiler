@@ -251,15 +251,16 @@ public class SyntacticAnalyzer {
 	
 	private boolean classDecl() throws IOException{
 		Token id = new Token();
+		Token classToken = new Token();
 		if (!skipErrors(new String[] { Constants.RESERVED_WORD_CLASS },
 				new String[] { }))
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{ Constants.RESERVED_WORD_CLASS })){
-			if(match(Constants.RESERVED_WORD_CLASS) 
+			if(match(Constants.RESERVED_WORD_CLASS, classToken) 
 					&& match(Constants.ID, id)
 					&& tableHandler.createClassEntryAndTable(id)
 					&& match(Constants.OPENCRLBRACKET)
-					&& varFuncDefs()
+					&& varFuncDefs(classToken)
 					&& match(Constants.CLOSECRLBRACKET)
 					&& match(Constants.SEMICOLON)){
 				if(secondPass) grammarWriter.write("classDecl -> 'class' 'id' '{' varFuncDefs '}'';'\n");
@@ -272,7 +273,7 @@ public class SyntacticAnalyzer {
 		return !error;
 	}
 	
-	private boolean varFuncDefs() throws IOException{
+	private boolean varFuncDefs(Token classToken) throws IOException{
 		if (!skipErrors(new String[] { Constants.RESERVED_WORD_FLOAT, 
 				Constants.ID,
 				Constants.RESERVED_WORD_INT },
@@ -283,7 +284,7 @@ public class SyntacticAnalyzer {
 				Constants.RESERVED_WORD_FLOAT, 
 				Constants.ID,
 				Constants.RESERVED_WORD_INT})){
-			if(varFuncDef() && varFuncDefs()){
+			if(varFuncDef(classToken) && varFuncDefs(classToken)){
 				if(secondPass) grammarWriter.write("varFuncDefs	-> varFuncDef varFuncDefs\n");
 			} else {
 				error = true;
@@ -297,13 +298,14 @@ public class SyntacticAnalyzer {
 		return !error;
 	}
 	
-	private boolean varFuncDef() throws IOException{
+	private boolean varFuncDef(Token classToken) throws IOException{
 		Token type = new Token();
 		Token id = new Token();
 //		To pass type and id down the tree
 		VarFuncDefTail varFuncDefTail = new VarFuncDefTail();
 		varFuncDefTail.type = type;
 		varFuncDefTail.id = id;
+		varFuncDefTail.classToken = classToken;
 		if (!skipErrors(new String[] { Constants.RESERVED_WORD_FLOAT, 
 				Constants.ID,
 				Constants.RESERVED_WORD_INT },
@@ -341,6 +343,7 @@ public class SyntacticAnalyzer {
 			VarDefTail varDefTail = new VarDefTail();
 			varDefTail.type = varFuncDefTail.type;
 			varDefTail.id = varFuncDefTail.id;
+			varDefTail.classToken = varFuncDefTail.classToken;
 			if(varDefTail(varDefTail)){
 				if(secondPass) grammarWriter.write("varFuncDefTail -> varDefTail\n");
 			} else {
@@ -378,7 +381,10 @@ public class SyntacticAnalyzer {
 							arraySizeList.getArraySizeList())){
 				if(secondPass){
 					grammarWriter.write("varDefTail	-> arraySizeList ';'\n");
-					codeGenerator.genCodeCreateVariable(varDefTail.id);
+					if(varDefTail.classToken == null 
+							|| !varDefTail.classToken.getValue().equalsIgnoreCase(Constants.RESERVED_WORD_CLASS)){
+						codeGenerator.genCodeCreateVariable(varDefTail.id);
+					}
 				}
 			} else {
 				error = true;
@@ -401,7 +407,7 @@ public class SyntacticAnalyzer {
 					&& codeGenerator.genCodeCreateFunction(funcDefTail.id)
 					&& fParams(funcDefTail.id, count)
 					&& match(Constants.CLOSEPAR)
-					&& funcBody()
+					&& funcBody(null)
 					&& match(Constants.SEMICOLON)
 					&& tableHandler.delFuncTable(funcDefTail.id)){
 				if(secondPass) grammarWriter.write("funcDefTail	-> '(' fParams ')' funcBody ';'\n");
@@ -422,7 +428,7 @@ public class SyntacticAnalyzer {
 		if(lookAheadIsIn(lookAhead, new String[]{ Constants.RESERVED_WORD_PROGRAM })){
 			if(match(Constants.RESERVED_WORD_PROGRAM, program)
 					&& tableHandler.createProgramTable(program)
-					&& funcBody()
+					&& funcBody(program)
 					&& match(Constants.SEMICOLON)
 					&& funcDefList()){
 				if(secondPass) grammarWriter.write("progBody -> 'program' funcBody ';' funcDefList\n");
@@ -468,7 +474,7 @@ public class SyntacticAnalyzer {
 				Constants.RESERVED_WORD_FLOAT,
 				Constants.ID})){
 			if(funcHead(funcId) 
-					&& funcBody() 
+					&& funcBody(null) 
 					&& match(Constants.SEMICOLON)
 					&& tableHandler.delFuncTable(funcId)){
 				if(secondPass) grammarWriter.write("funcDef -> funcHead funcBody ';'\n");
@@ -509,13 +515,13 @@ public class SyntacticAnalyzer {
 		return !error;
 	}
 	
-	private boolean funcBody() throws IOException{
+	private boolean funcBody(Token program) throws IOException{
 		if (!skipErrors(new String[] { Constants.OPENCRLBRACKET },
 				new String[] { Constants.CLOSECRLBRACKET }))
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{Constants.OPENCRLBRACKET})){
 			if(match(Constants.OPENCRLBRACKET) 
-					&& varDeclStatList()
+					&& varDeclStatList(program)
 					&& match(Constants.CLOSECRLBRACKET)){
 				if(secondPass) grammarWriter.write("funcBody -> '{' varDeclStatList '}'\n");
 			} else {
@@ -527,7 +533,7 @@ public class SyntacticAnalyzer {
 		return !error;
 	}
 	
-	private boolean varDeclStatList() throws IOException{
+	private boolean varDeclStatList(Token program) throws IOException{
 		if (!skipErrors(new String[] { Constants.ID,
 				Constants.RESERVED_WORD_FOR,
 				Constants.RESERVED_WORD_IF,
@@ -546,7 +552,7 @@ public class SyntacticAnalyzer {
 				Constants.RESERVED_WORD_RETURN,
 				Constants.RESERVED_WORD_FLOAT,
 				Constants.RESERVED_WORD_INT})){
-			if(varDeclStat() && varDeclStatList()){
+			if(varDeclStat(program) && varDeclStatList(program)){
 				if(secondPass) grammarWriter.write("varDeclStatList -> varDeclStat varDeclStatList\n");
 			} else {
 				error = true;
@@ -559,7 +565,7 @@ public class SyntacticAnalyzer {
 		return !error;
 	}
 	
-	private boolean varDeclStat() throws IOException{
+	private boolean varDeclStat(Token program) throws IOException{
 		if (!skipErrors(new String[] { Constants.RESERVED_WORD_FLOAT,
 				Constants.RESERVED_WORD_INT, 
 				Constants.RESERVED_WORD_FOR,
@@ -575,6 +581,7 @@ public class SyntacticAnalyzer {
 			Token type = new Token();
 			VarDeclTail varDeclTail = new VarDeclTail();
 			varDeclTail.type = type;
+			varDeclTail.program = program;
 			if(nonidtype(type) && varDeclTail(varDeclTail)){
 				if(secondPass) grammarWriter.write("varDeclStat -> nonidtype varDeclTail\n");
 			} else {
@@ -594,6 +601,7 @@ public class SyntacticAnalyzer {
 			Token id = new Token();
 			VarDeclStatTail varDeclStatTail = new VarDeclStatTail();
 			varDeclStatTail.id = id;
+			varDeclStatTail.program = program;
 			if(match(Constants.ID, id)
 					&& varDeclStatTail(varDeclStatTail)){
 				if(secondPass) grammarWriter.write("varDeclStat -> 'id' varDeclStatTail\n");
@@ -616,6 +624,7 @@ public class SyntacticAnalyzer {
 		if(lookAheadIsIn(lookAhead, new String[]{Constants.ID})){
 			VarDeclTail varDeclTail = new VarDeclTail();
 			varDeclTail.type = varDeclStatTail.id;
+			varDeclTail.program = varDeclStatTail.program;
 			if(tableHandler.checkClassExists(varDeclStatTail.id) && varDeclTail(varDeclTail)){
 				if(secondPass) grammarWriter.write("varDeclStatTail -> varDeclTail\n");
 			} else {
@@ -653,7 +662,10 @@ public class SyntacticAnalyzer {
 					&& tableHandler.createVariableEntry(varDeclTail.type, id, arraySizeList.getArraySizeList())){
 				if(secondPass){
 					grammarWriter.write("varDeclTail -> id arraySizeList ;\n");
-					codeGenerator.genCodeCreateVariable(id);
+//					if(varDeclTail.program != null 
+//							&& varDeclTail.program.getValue().equalsIgnoreCase(Constants.RESERVED_WORD_PROGRAM)){
+						codeGenerator.genCodeCreateVariable(id);
+//					}
 				}
 			} else {
 				error = true;

@@ -1,10 +1,6 @@
-Table: func
-Name: y kind: PARAMETER type: int
-
 Table: Global
 Name: program kind: FUNCTION type: null
-Name: func kind: FUNCTION type: int
 
 Table: program
-Name: x kind: VARIABLE type: int
+Name: id kind: VARIABLE type: int[3][2][1]
 

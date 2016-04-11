@@ -6,5 +6,6 @@ public class VarDefTail {
 
 	public Token type;
 	public Token id;
+	public Token classToken;
 
 }

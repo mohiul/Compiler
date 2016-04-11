@@ -156,6 +156,10 @@ public class SymbolTableHandler {
 		}
 		return toReturn;
 	}
+	
+	public SymbolTableRow getClass(String type) throws IOException {
+		return globalTable.tableRowMap.get(type);
+	}
 
 	public boolean checkVariableExists(Token id, Type type) throws IOException {
 		return checkVariableExists(id, false, 0, type);
