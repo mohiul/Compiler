@@ -2,7 +2,5 @@ Table: Global
 Name: program kind: FUNCTION type: null
 
 Table: program
-Name: x kind: VARIABLE type: int
-Name: i kind: VARIABLE type: int
-Name: j kind: VARIABLE type: int
+Name: id kind: VARIABLE type: int[3][2][1]
 

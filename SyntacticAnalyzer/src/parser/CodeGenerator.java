@@ -14,6 +14,7 @@ import lex.Constants;
 import lex.Token;
 import sdt.Expression;
 import sdt.Factor;
+import sdt.Variable;
 import sdt.ArithExpr;
 import sdt.ConditionCount;
 import smbl.SymbolTableHandler;
@@ -203,7 +204,7 @@ public class CodeGenerator {
 		}
 		String tempVar = "t" + tempVarCount++;
 		codeWriterData.write(tempVar + "\t dw \t 0\n");			
-		codeWriterProgram.write("\t sw \t " + tempVar + "(r0),r3\n");			
+		codeWriterProgram.write("\t sw \t " + tempVar + "(r0),r3\n");
 		codeWriterProgram.write("\n");
 		Token tempT = new Token();
 		tempT.setValue(tempVar);
@@ -322,5 +323,26 @@ public class CodeGenerator {
 		}
 		return true;
 	}
-	
+
+	public void genCodePut(Expression expression) throws IOException {
+		if(secondPass){
+			if(expression.arithExpr != null
+					&& expression.arithExpr.term != null
+					&& expression.arithExpr.term.factor != null){
+				loadFactorInReg(expression.arithExpr.term.factor, "r1");
+				codeWriterProgram.write("\t putc \t r1\n");
+			}
+		}
+	}
+
+	public void genCodeGet(Variable variable) throws IOException {
+		if(secondPass){
+			if(variable.upIdnest != null
+					&& variable.upIdnest.id != null){
+				codeWriterProgram.write("\t getc \t r1\n");
+				codeWriterProgram.write("\t sw \t " + variable.upIdnest.id.getValue() + "(r0),r1\n");
+				codeWriterProgram.write("\n");
+			}
+		}		
+	}
 }

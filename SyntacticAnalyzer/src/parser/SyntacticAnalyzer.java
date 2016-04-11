@@ -867,7 +867,7 @@ public class SyntacticAnalyzer {
 					&& match(Constants.SEMICOLON)){
 				if(secondPass){
 					grammarWriter.write("statement -> 'put' '(' expr ')' ';'\n");
-//					TODO: Generate code for put
+					codeGenerator.genCodePut(expression);
 				}
 			} else {
 				error = true;
@@ -881,7 +881,7 @@ public class SyntacticAnalyzer {
 					&& match(Constants.SEMICOLON)){
 				if(secondPass){
 					grammarWriter.write("statement -> 'get' '(' variable ')' ';'\n");
-//					TODO Generate code for get
+					codeGenerator.genCodeGet(variable);
 				}
 			} else {
 				error = true;
