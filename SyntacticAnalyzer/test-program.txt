@@ -6,7 +6,7 @@ class c{
 };
 program {
 	int x;
-	c c1;
+	c c1[2][2];
 };
 
 int func() {

@@ -121,7 +121,12 @@ public class CodeGenerator {
 				codeWriterData.write(varName + "\tres " + dim*floatSize + "\n");
 			}
 		} else {
-			dim = getTotalClassSize(varType.getTypeName());
+			int classDim = getTotalClassSize(varType.getTypeName());
+			if(classDim > 0 && dim > 0){
+				dim *= classDim;
+			} else if(classDim > 0 && dim == 0){
+				dim = classDim;
+			}
 			if (dim == 0) {
 				codeWriterData.write(varName + "\tdw 0\n");
 			} else if(dim > 0){
