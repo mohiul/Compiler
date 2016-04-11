@@ -14,6 +14,7 @@ import lex.Constants;
 import lex.Token;
 import sdt.Expression;
 import sdt.Factor;
+import sdt.ArithExpr;
 import sdt.ConditionCount;
 import smbl.SymbolTableHandler;
 import smbl.SymbolTableRow;
@@ -32,6 +33,7 @@ public class CodeGenerator {
 	int zeroCount;
 	int endandCount;
 	int ifCount;
+	int forCount;
 	
 	public CodeGenerator(){
 		secondPass = false;
@@ -51,6 +53,8 @@ public class CodeGenerator {
 		tempVarCount = 0;
 		zeroCount = 0;
 		endandCount = 0;
+		ifCount = 0;
+		forCount = 0;
 	}
 
 	public void closeWriter() throws IOException {
@@ -226,7 +230,7 @@ public class CodeGenerator {
 					&& expression.arithExpr.term != null
 					&& expression.arithExpr.term.factor != null){
 				loadFactorInReg(expression.arithExpr.term.factor, "r1");
-				cond.ifCount = ifCount;
+				cond.count = ifCount;
 				String elseStr = "else" + (ifCount++);
 				codeWriterProgram.write("\t bz \t r1, " + elseStr + "\n");
 				codeWriterProgram.write("\n");
@@ -237,22 +241,86 @@ public class CodeGenerator {
 
 	public boolean genCodeIfCondElse(ConditionCount cond) throws IOException {
 		if(secondPass){
-			String endif = "endif" + cond.ifCount;
+			String endif = "endif" + cond.count;
 			codeWriterProgram.write("\t j \t " + endif + "\n");
-			codeWriterProgram.write("else" + cond.ifCount + " \t \n");
+			codeWriterProgram.write("else" + cond.count + " \t \n");
 		}
 		return true;
 	}
 
 	public boolean genCodeEndIf(ConditionCount cond) throws IOException {
 		if(secondPass){
-			codeWriterProgram.write("endif" + cond.ifCount + " \t \n");
+			codeWriterProgram.write("endif" + cond.count + " \t \n");
 		}
 		return true;
 	}
 
 	public void setSecondPass(boolean secondPass) {
 		this.secondPass = secondPass;
+	}
+
+	public boolean genCodeForDecl(Token id, Expression expression, ConditionCount condition) throws IOException {
+		if(secondPass){
+			genCodeCreateVariable(id);
+			if(id != null){
+				if(expression.arithExpr != null
+						&& expression.arithExpr.term != null
+						&& expression.arithExpr.term.factor != null){
+					if(expression.arithExpr.term.factor.tempVar != null){
+						genCodeAssignment(id, expression.arithExpr.term.factor.tempVar);
+					} else if(expression.arithExpr.term.factor.upNum != null){
+						genCodeAssignment(id, expression.arithExpr.term.factor.upNum);
+					} else if(expression.arithExpr.term.factor.upId != null){
+						genCodeAssignment(id, expression.arithExpr.term.factor.upId);
+					}
+				}
+			}
+			condition.count = forCount++;
+			codeWriterProgram.write("gofor" + condition.count + " \t \n");
+		}
+		return true;
+	}
+
+	public boolean genCodeForCond(ArithExpr arithExpr, Token relOp, Expression expression1, ConditionCount condition) throws IOException {
+		if(secondPass){
+			Factor f1 = null;
+			Factor f2 = null;
+			if(arithExpr.term != null
+					&& arithExpr.term.factor != null){
+				f1 = arithExpr.term.factor;
+			}
+			if(expression1.arithExpr != null
+					&& expression1.arithExpr.term != null
+					&& expression1.arithExpr.term.factor != null){
+				f2 = expression1.arithExpr.term.factor;
+			}
+			if(f1!= null && f2 != null){
+				genCodeRelOperation(f1, f2, relOp);
+			}
+			loadFactorInReg(f1, "r1");
+			String elseStr = "endfor" + condition.count;
+			codeWriterProgram.write("\t bz \t r1, " + elseStr + "\n");
+			codeWriterProgram.write("\t j \t " + "forstat" + condition.count + "\n");
+			codeWriterProgram.write("goforIncr" + condition.count + " \t \n");
+
+		}
+		return true;
+	}
+
+	public boolean genCodeForEnd(ConditionCount condition) throws IOException {
+		if(secondPass){
+			codeWriterProgram.write("\t j \t " + "goforIncr" + condition.count + "\n");
+			codeWriterProgram.write("endfor" + condition.count + " \t \n");
+		}
+		return true;
+	}
+
+	public boolean genCodeForIncr(ConditionCount condition) throws IOException {
+		if(secondPass){
+			codeWriterProgram.write("\t j \t " + "gofor" + condition.count + "\n");
+			codeWriterProgram.write("forstat" + condition.count + " \t \n");
+		}
+		return true;
 	}
 	
 }

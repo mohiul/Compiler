@@ -917,6 +917,7 @@ public class SyntacticAnalyzer {
 			Token relOp = new Token();
 			AssignStat assignStat = new AssignStat();
 			Token assignOp = new Token(); 
+			ConditionCount condition = new ConditionCount();
 			if(match(Constants.RESERVED_WORD_FOR)
 					&& match(Constants.OPENPAR)
 					&& type(type)
@@ -926,31 +927,21 @@ public class SyntacticAnalyzer {
 					&& expr(expression)
 					&& tableHandler.checkCompatableType(new Type(type), expression.arithExpr.upType, assignOp)
 					&& match(Constants.SEMICOLON)
+					&& codeGenerator.genCodeForDecl(id, expression, condition)
 					&& arithExpr(arithExpr)
 					&& relOp(relOp)
 					&& expr(expression1)
 					&& tableHandler.checkCompatableType(arithExpr.upType, expression1.arithExpr.upType, relOp)
 					&& match(Constants.SEMICOLON)
+					&& codeGenerator.genCodeForCond(arithExpr,relOp, expression1, condition)
 					&& assignStat(assignStat)
+					&& codeGenerator.genCodeForIncr(condition)
 					&& match(Constants.CLOSEPAR)
 					&& statBlock()
-					&& match(Constants.SEMICOLON)){
+					&& match(Constants.SEMICOLON)
+					&& codeGenerator.genCodeForEnd(condition)){
 				if(secondPass){
 					grammarWriter.write("statement -> 'for' '(' type 'id' assignOp expr ';' arithExpr relOp expr ';' assignStat ')' statBlock ';'\n");
-					codeGenerator.genCodeCreateVariable(id);
-					if(id != null){
-						if(expression.arithExpr != null
-								&& expression.arithExpr.term != null
-								&& expression.arithExpr.term.factor != null){
-							if(expression.arithExpr.term.factor.tempVar != null){
-								codeGenerator.genCodeAssignment(id, expression.arithExpr.term.factor.tempVar);
-							} else if(expression.arithExpr.term.factor.upNum != null){
-								codeGenerator.genCodeAssignment(id, expression.arithExpr.term.factor.upNum);
-							} else if(expression.arithExpr.term.factor.upId != null){
-								codeGenerator.genCodeAssignment(id, expression.arithExpr.term.factor.upId);
-							}
-						}
-					}
 //					TODO Generate code for for
 				}
 			} else {
