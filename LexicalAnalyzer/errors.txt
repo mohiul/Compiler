@@ -1,15 +1,43 @@
-Invalid Number at line: 1 position: 6: 77.00
+Invalid Character at line: 1 position: 7: 77.00
 Invalid Number at line: 2 position: 2: 00
-Invalid Number at line: 3 position: 2: 08
+Invalid Number at line: 2 position: 5: 88
+Invalid Character at line: 3 position: 3: 08
 Invalid Number at line: 4 position: 2: 03
+Invalid Number at line: 4 position: 5: 9
 Invalid Number at line: 5 position: 2: 03
+Invalid Number at line: 5 position: 5: 0
 Invalid Number at line: 6 position: 2: 03
+Invalid Number at line: 6 position: 6: 90
 Invalid Number at line: 7 position: 4: 1.1.
-Invalid Character at line: 17 position: 1: %
-Invalid Character at line: 18 position: 1: $
-Invalid Character at line: 19 position: 1: #
-Invalid Character at line: 20 position: 1: @
+Invalid Number at line: 7 position: 6: 1
+Invalid Character at line: 7 position: 1: 
+Invalid Number at line: 9 position: 14: 99.0000000003
+Invalid Number at line: 10 position: 4: 3.0
+Invalid Number at line: 11 position: 4: 0.0
+Invalid Number at line: 12 position: 2: 0
+Invalid Number at line: 13 position: 8: 6
+Invalid Number at line: 14 position: 3: 44
+Invalid Number at line: 15 position: 5: 30.9
+Invalid Character at line: 15 position: 1: 
+Invalid Character at line: 17 position: 2: %
+Invalid Character at line: 18 position: 2: $
+Invalid Character at line: 19 position: 2: #
+Invalid Character at line: 20 position: 2: @
 Invalid Character at line: 21 position: 1: !
 Invalid Character at line: 21 position: 3: &
-Invalid Character at line: 21 position: 5: ~
+Invalid Character at line: 21 position: 6: ~
+Invalid Character at line: 21 position: 1: 
+Invalid Character at line: 24 position: 1: // bla%
+Invalid Character at line: 26 position: 7: /* bla bla
+bla */
+Invalid Character at line: 27 position: 1: 
+Invalid Character at line: 29 position: 9: /* bla bla
+bla # */
+Invalid Character at line: 30 position: 1: 
+Invalid Character at line: 32 position: 3: /* bla
+/*
+bla
+*/
+Invalid Character at line: 36 position: 3: /
+Invalid Character at line: 36 position: 1: 
 Comment not ended at line: 38 position: 1: /* bla

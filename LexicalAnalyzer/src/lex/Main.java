@@ -53,6 +53,8 @@ public class Main {
 		}
 		try {writer.close();} catch (Exception ex) {/*ignore*/}
 		lex.closeWriter();
+		System.out.println("Output token file: " + tokenFileName);
+		System.out.println("Output error file: " + errorFileName);
 	}
 	
 }
