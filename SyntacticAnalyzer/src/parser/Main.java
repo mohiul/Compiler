@@ -27,6 +27,14 @@ public class Main {
 //		if(inputFile.length() > 0){
 //			grammarFileName = inputFile;
 //		}
+
+		//symbol table file name
+		String symbolTableFileName = "symbolTables.txt";
+//		System.out.print("Please enter output symbol tables file name [symbolTables.txt]:");
+//		inputFile = br.readLine();
+//		if(inputFile.length() > 0){
+//			symbolTableFileName = inputFile;
+//		}
 		
 		//error file name
 		String errorFileName = "errors.txt";
@@ -49,8 +57,13 @@ public class Main {
 		boolean parserReturn = parser.parse();
 		if(!parserReturn)
 			System.out.println("parserReturn: " + parserReturn);
-		else
+		else{
 			System.out.println("Successfully parsed!");
+			System.out.println("Output grammar file: " + grammarFileName);
+			System.out.println("Output symbol table file: " + symbolTableFileName);
+			System.out.println("Output error file: " + errorFileName);
+			System.out.println("Output code file: " + codeFileName);
+		}
 		parser.closeWriter();
 	}
 

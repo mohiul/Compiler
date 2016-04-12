@@ -2,6 +2,7 @@ package parser;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
@@ -13,13 +14,12 @@ import java.util.List;
 
 import lex.Constants;
 import lex.Token;
-import sdt.Expression;
-import sdt.Factor;
-import sdt.Idnest;
-import sdt.IndiceList;
-import sdt.Variable;
 import sdt.ArithExpr;
 import sdt.ConditionCount;
+import sdt.Expression;
+import sdt.Factor;
+import sdt.IndiceList;
+import sdt.Variable;
 import smbl.SymbolTable;
 import smbl.SymbolTableHandler;
 import smbl.SymbolTableRow;
@@ -27,12 +27,14 @@ import smbl.VariableKind;
 import smbl.VariableType;
 
 public class CodeGenerator {
-	protected Writer codeWriterData;
+	protected Writer codeWriterDataDW;
+	protected Writer codeWriterDataRES;
 	protected Writer currentProgramWriter;
 	protected Writer codeWriterProgram;
 	protected Writer codeWriterFunction;
 	SymbolTableHandler tableHandler;
-	private String codeDataFileName;
+	private String codeDataDWFileName;
+	private String codeDataRESFileName;
 	private String codeProgramFileName;
 	private String codeFuncFileName;
 	private String codeFileName;
@@ -53,13 +55,16 @@ public class CodeGenerator {
 	public CodeGenerator(String codeFilename, 
 			SymbolTableHandler tableHandler) throws UnsupportedEncodingException, FileNotFoundException {
 		secondPass = false;
-		codeDataFileName = "codeData.txt";
+		codeDataDWFileName = "codeDataDW.txt";
+		codeDataRESFileName = "codeDataRES.txt";
 		codeProgramFileName = "codeProgram.txt";
 		codeFuncFileName = "codeFunc.txt";
 		this.codeFileName = codeFilename;
 		this.tableHandler = tableHandler;
-		codeWriterData = new BufferedWriter(new OutputStreamWriter(
-				new FileOutputStream(codeDataFileName), "utf-8"));
+		codeWriterDataDW = new BufferedWriter(new OutputStreamWriter(
+				new FileOutputStream(codeDataDWFileName), "utf-8"));
+		codeWriterDataRES = new BufferedWriter(new OutputStreamWriter(
+				new FileOutputStream(codeDataRESFileName), "utf-8"));
 		codeWriterProgram = new BufferedWriter(new OutputStreamWriter(
 				new FileOutputStream(codeProgramFileName), "utf-8"));
 		currentProgramWriter = codeWriterProgram;
@@ -76,7 +81,8 @@ public class CodeGenerator {
 
 	public void closeWriter() throws IOException {
 		if(secondPass){
-			if(codeWriterData != null) codeWriterData.close();
+			if(codeWriterDataDW != null) codeWriterDataDW.close();
+			if(codeWriterDataRES != null) codeWriterDataRES.close();
 			if(codeWriterFunction != null) codeWriterFunction.close();
 			if(codeWriterProgram != null) codeWriterProgram.close();
 			
@@ -95,11 +101,24 @@ public class CodeGenerator {
 			while ((line = br.readLine()) != null) {
 				currentProgramWriter.write(line + "\n");
 			}
-			br = new BufferedReader(new FileReader(codeDataFileName));
+			br = new BufferedReader(new FileReader(codeDataDWFileName));
+			while ((line = br.readLine()) != null) {
+				currentProgramWriter.write(line + "\n");
+			}
+			br = new BufferedReader(new FileReader(codeDataRESFileName));
 			while ((line = br.readLine()) != null) {
 				currentProgramWriter.write(line + "\n");
 			}
 			currentProgramWriter.close();
+			new File(codeDataDWFileName).delete();
+			new File(codeDataRESFileName).delete();
+			new File(codeProgramFileName).delete();
+			new File(codeFuncFileName).delete();
+//			codeDataDWFileName = "codeDataDW.txt";
+//			codeDataRESFileName = "codeDataRES.txt";
+//			codeProgramFileName = "codeProgram.txt";
+//			codeFuncFileName = "codeFunc.txt";
+
 		}
 	}
 	
@@ -119,15 +138,15 @@ public class CodeGenerator {
 		int dim = getTotalDimSize(varType.getDimension());
 		if (varType.getTypeName().equalsIgnoreCase(Constants.RESERVED_WORD_INT)) {
 			if (dim == 0) {
-				codeWriterData.write(varName + "\tdw 0\n");
+				codeWriterDataDW.write(varName + "\tdw 0\n");
 			} else if(dim > 0){
-				codeWriterData.write(varName + "\tres " + dim + "\n");
+				codeWriterDataRES.write(varName + "\tres " + dim + "\n");
 			}
 		}else if (varType.getTypeName().equalsIgnoreCase(Constants.RESERVED_WORD_FLOAT)) {
 			if (dim == 0) {
-				codeWriterData.write(varName + "\tres " + floatSize + "\n");
+				codeWriterDataRES.write(varName + "\tres " + floatSize + "\n");
 			} else if(dim > 0){
-				codeWriterData.write(varName + "\tres " + dim*floatSize + "\n");
+				codeWriterDataRES.write(varName + "\tres " + dim*floatSize + "\n");
 			}
 		} else {
 			int classDim = getTotalClassSize(varType.getTypeName());
@@ -137,9 +156,9 @@ public class CodeGenerator {
 				dim = classDim;
 			}
 			if (dim == 0) {
-				codeWriterData.write(varName + "\tdw 0\n");
+				codeWriterDataDW.write(varName + "\tdw 0\n");
 			} else if(dim > 0){
-				codeWriterData.write(varName + "\tres " + dim + "\n");
+				codeWriterDataRES.write(varName + "\tres " + dim + "\n");
 			}
 		}
 	}
@@ -301,7 +320,7 @@ public class CodeGenerator {
 			tempT.setValue(tempVar);
 			tempT.setType(Constants.ID);
 			f1.tempVar = tempT;
-			codeWriterData.write(tempVar + "\t dw \t 0\n");			
+			codeWriterDataDW.write(tempVar + "\t dw \t 0\n");			
 		} else if(f1.tempVar != null){
 			tempVar = f1.tempVar.getValue();
 		} else if(f2.tempVar != null){
@@ -328,7 +347,7 @@ public class CodeGenerator {
 			currentProgramWriter.write("\t cge \t r3,r1,r2\n");
 		}
 		String tempVar = "t" + tempVarCount++;
-		codeWriterData.write(tempVar + "\t dw \t 0\n");			
+		codeWriterDataDW.write(tempVar + "\t dw \t 0\n");			
 		currentProgramWriter.write("\t sw \t " + tempVar + "(r0),r3\n");
 		currentProgramWriter.write("\n");
 		Token tempT = new Token();
@@ -543,7 +562,7 @@ public class CodeGenerator {
 			tempVar = "t" + tempVarCount++;
 			tempVarToken.setValue(tempVar);
 			tempVarToken.setType(Constants.ID);
-			codeWriterData.write(tempVar + "\t dw \t 0\n");			
+			codeWriterDataDW.write(tempVar + "\t dw \t 0\n");			
 
 			currentProgramWriter.write("\t sw \t " + tempVar + "(r0),r1\n");
 		}		

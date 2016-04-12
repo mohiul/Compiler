@@ -29,7 +29,7 @@ public class SyntacticAnalyzerTest {
 	
 	@Before
 	public void setUp() throws Exception {
-		parser = new SyntacticAnalyzer("errors.txt", "grammars.txt", "code.txt");
+		parser = new SyntacticAnalyzer("errors.txt", "grammars.txt", "code.m");
 	}
 
 	@After
@@ -47,28 +47,28 @@ public class SyntacticAnalyzerTest {
 	public void testProgErr1() throws IOException{
 		parser.setLexReaderStr("program id { };");
 		assertTrue(parser.parse());
-		assertEquals("Syntax error at line: 1 position: 9: id\n", errContent.toString());
+		assertEquals("Syntax error at line: 1 position: 9: id", errContent.toString().trim());
 	}
 	
 	@Test
 	public void testProgErr2() throws IOException{
 		parser.setLexReaderStr("program { id };");
 		assertFalse(parser.parse());
-		assertEquals("Syntax error at line: 1 position: 14: }\n", errContent.toString());
+		assertEquals("Syntax error at line: 1 position: 14: }", errContent.toString().trim());
 	}
 	
 	@Test
 	public void testProgErr3() throws IOException{
 		parser.setLexReaderStr("program { } id;");
 		assertFalse(parser.parse());
-		assertEquals("Syntax error at line: 1 position: 13: id\n", errContent.toString());
+		assertEquals("Syntax error at line: 1 position: 13: id", errContent.toString().trim());
 	}
 	
 	@Test
 	public void testProgErr4() throws IOException{
 		parser.setLexReaderStr("program { }; id");
 		assertFalse(parser.parse());
-		assertEquals("Syntax error at line: 1 position: 16\n", errContent.toString());
+		assertEquals("Syntax error at line: 1 position: 16", errContent.toString().trim());
 	}
 	
 	@Test
@@ -82,7 +82,7 @@ public class SyntacticAnalyzerTest {
 	public void testClassDeclErr1() throws IOException{
 		parser.setLexReaderStr("class test id { }; program { };");
 		assertFalse(parser.parse());
-		assertEquals("Syntax error at line: 1 position: 12: id\n", errContent.toString());
+		assertEquals("Syntax error at line: 1 position: 12: id", errContent.toString().trim());
 		
 	}
 	
@@ -90,21 +90,21 @@ public class SyntacticAnalyzerTest {
 	public void testClassDeclErr2() throws IOException{
 		parser.setLexReaderStr("class test { id }; program { };");
 		assertFalse(parser.parse());
-		assertEquals("Syntax error at line: 1 position: 17: }\n", errContent.toString());
+		assertEquals("Syntax error at line: 1 position: 17: }", errContent.toString().trim());
 	}
 	
 	@Test
 	public void testClassDeclErr3() throws IOException{
 		parser.setLexReaderStr("class test { } id; program { };");
 		assertFalse(parser.parse());
-		assertEquals("Syntax error at line: 1 position: 16: id\n", errContent.toString());
+		assertEquals("Syntax error at line: 1 position: 16: id", errContent.toString().trim());
 	}
 	
 	@Test
 	public void testClassDeclErr4() throws IOException{
 		parser.setLexReaderStr("class test { }; id program { };");
 		assertTrue(parser.parse());
-		assertEquals("Syntax error at line: 1 position: 17: id\n", errContent.toString());
+		assertEquals("Syntax error at line: 1 position: 17: id", errContent.toString().trim());
 	}
 	
 	@Test
@@ -125,28 +125,28 @@ public class SyntacticAnalyzerTest {
 	public void testClassIdDeclErr1() throws IOException{
 		parser.setLexReaderStr("class; test { int id; }; program { };");
 		assertFalse(parser.parse());
-		assertEquals("Syntax error at line: 1 position: 6: ;\n", errContent.toString());
+		assertEquals("Syntax error at line: 1 position: 6: ;", errContent.toString().trim());
 	}
 	
 	@Test
 	public void testClassIdDeclErr2() throws IOException{
 		parser.setLexReaderStr("class test; { int id; }; program { };");
 		assertFalse(parser.parse());
-		assertEquals("Syntax error at line: 1 position: 11: ;\n", errContent.toString());
+		assertEquals("Syntax error at line: 1 position: 11: ;", errContent.toString().trim());
 	}
 	
 	@Test
 	public void testClassIdDeclErr3() throws IOException{
 		parser.setLexReaderStr("class test {; int id; }; program { };");
 		assertTrue(parser.parse());
-		assertEquals("Syntax error at line: 1 position: 13: ;\n", errContent.toString());
+		assertEquals("Syntax error at line: 1 position: 13: ;", errContent.toString().trim());
 	}
 	
 	@Test
 	public void testClassIdDeclErr4() throws IOException{
 		parser.setLexReaderStr("class test { int; id; }; program { };");
 		assertFalse(parser.parse());
-		assertEquals("Syntax error at line: 1 position: 17: ;\n", errContent.toString());
+		assertEquals("Syntax error at line: 1 position: 17: ;", errContent.toString().trim());
 	}
 	
 	@Test
@@ -160,28 +160,28 @@ public class SyntacticAnalyzerTest {
 	public void testClassIdFuncDeclsErr1() throws IOException{
 		parser.setLexReaderStr("class test { int id; float func;(){}; }; program { };");
 		assertTrue(parser.parse());
-		assertEquals("Syntax error at line: 1 position: 33: (\nSyntax error at line: 1 position: 39: }\n", errContent.toString());
+		assertEquals("Syntax error at line: 1 position: 33: (\nSyntax error at line: 1 position: 39: }", errContent.toString().trim());
 	}
 	
 	@Test
 	public void testClassIdFuncDeclsErr2() throws IOException{
 		parser.setLexReaderStr("class test { int id; float func(;){}; }; program { };");
 		assertTrue(parser.parse());
-		assertEquals("Syntax error at line: 1 position: 33: ;\n", errContent.toString());
+		assertEquals("Syntax error at line: 1 position: 33: ;", errContent.toString().trim());
 	}
 
 	@Test
 	public void testClassIdFuncDeclsErr3() throws IOException{
 		parser.setLexReaderStr("class test { int id; float func();{}; }; program { };");
 		assertTrue(parser.parse());
-		assertEquals("Syntax error at line: 1 position: 34: ;\n", errContent.toString());
+		assertEquals("Syntax error at line: 1 position: 34: ;", errContent.toString().trim());
 	}
 	
 	@Test
 	public void testClassIdFuncDeclsErr4() throws IOException{
 		parser.setLexReaderStr("class test { int id; float func(){;}; }; program { };");
 		assertTrue(parser.parse());
-		assertEquals("Syntax error at line: 1 position: 35: ;\n", errContent.toString());
+		assertEquals("Syntax error at line: 1 position: 35: ;", errContent.toString().trim());
 	}
 	
 	@Test
@@ -195,7 +195,7 @@ public class SyntacticAnalyzerTest {
 	public void testClassIdDeclsErr1() throws IOException{
 		parser.setLexReaderStr("class test { int [id; float id2; }; program { };");
 		assertFalse(parser.parse());
-		assertEquals("Syntax error at line: 1 position: 18: [\n", errContent.toString());
+		assertEquals("Syntax error at line: 1 position: 18: [", errContent.toString().trim());
 		
 	}
 	
@@ -203,7 +203,7 @@ public class SyntacticAnalyzerTest {
 	public void testClassIdDeclsErr2() throws IOException{
 		parser.setLexReaderStr("class test { int id[][][; float id2; }; program { };");
 		assertFalse(parser.parse());
-		assertEquals("Syntax error at line: 1 position: 21: ]\n", errContent.toString());
+		assertEquals("Syntax error at line: 1 position: 21: ]", errContent.toString().trim());
 		
 	}
 
@@ -218,14 +218,14 @@ public class SyntacticAnalyzerTest {
 	public void testMultiArraysErr1() throws IOException{
 		parser.setLexReaderStr("class test { int var1[4][5][7].[8][9][1][0]; float id2[11][12]; }; program { };");
 		assertTrue(parser.parse());
-		assertEquals("Syntax error at line: 1 position: 31: .\n", errContent.toString());
+		assertEquals("Syntax error at line: 1 position: 31: .", errContent.toString().trim());
 	}
 	
 	@Test
 	public void testMultiArraysErr2() throws IOException{
 		parser.setLexReaderStr("class test { int var1[4][5][7]{}[8][9][1][0]; float id2[11][12]; }; program { };");
 		assertTrue(parser.parse());
-		assertEquals("Syntax error at line: 1 position: 31: {\n", errContent.toString());
+		assertEquals("Syntax error at line: 1 position: 31: {", errContent.toString().trim());
 	}
 	
 	@Test
@@ -252,7 +252,7 @@ public class SyntacticAnalyzerTest {
 	public void testFunctionWithReturnErr1() throws IOException{
 		parser.setLexReaderStr("program { int id; }; float func(int array[100]){ int minValue; return; (minValue); };");
 		assertFalse(parser.parse());
-		assertEquals("Syntax error at line: 1 position: 70: ;\n", errContent.toString());
+		assertEquals("Syntax error at line: 1 position: 70: ;", errContent.toString().trim());
 	}
 	
 	@Test
@@ -266,7 +266,7 @@ public class SyntacticAnalyzerTest {
 	public void testIdExpressionsErr1() throws IOException{
 		parser.setLexReaderStr("program { int id; id = 1 + !@#$2; };");
 		assertTrue(parser.parse());
-		assertEquals("Invalid Character at line: 1 position: 31: !@#$\n", errContent.toString());
+		assertEquals("Invalid Character at line: 1 position: 31: !@#$", errContent.toString().trim());
 	}
 	
 	@Test
@@ -280,7 +280,7 @@ public class SyntacticAnalyzerTest {
 	public void testIdNestErr1() throws IOException{
 		parser.setLexReaderStr("program { arrayUtility[1][1][1][1]..var1[4][1] = 2; };");
 		assertFalse(parser.parse());
-		assertEquals("Syntax error at line: 1 position: 36: .\n", errContent.toString());
+		assertEquals("Syntax error at line: 1 position: 36: .", errContent.toString().trim());
 	}
 	
 	@Test
@@ -315,14 +315,14 @@ public class SyntacticAnalyzerTest {
 	public void testProg18() throws IOException{
 		parser.setLexReaderStr("program { int id[1][2][3]; get ( id[1][2] ) ; } ; ");
 		assertFalse(parser.parse());
-		assertEquals("Variable id incorrect array dimension size at line: 1 position: 34\n", errContent.toString());
+		assertEquals("Variable id incorrect array dimension size at line: 1 position: 34", errContent.toString().trim());
 	}
 
 	@Test
 	public void testProg19() throws IOException{
 		parser.setLexReaderStr("program { int i; float j; i = i * j;};");
 		assertFalse(parser.parse());
-		assertEquals("Type compatibility error for * at line: 1 position: 33\n", errContent.toString());
+		assertEquals("Type compatibility error for * at line: 1 position: 33", errContent.toString().trim());
 	}
 	
 	@Test
@@ -335,21 +335,21 @@ public class SyntacticAnalyzerTest {
 	public void testProg21() throws IOException{
 		parser.setLexReaderStr("class U {int test(int i, int j, int k){ }; }; program { U u; int i; i = u.test(1, 2, 3.0); };");
 		assertFalse(parser.parse());
-		assertEquals("Incorrect type for parameter no: 3, function test at line: 1 position: 75\n", errContent.toString());
+		assertEquals("Incorrect type for parameter no: 3, function test at line: 1 position: 75", errContent.toString().trim());
 	}
 	
 	@Test
 	public void testProg22() throws IOException{
 		parser.setLexReaderStr("class U {int test(int i, int j){ }; }; program { U u; int i; i = u.test(1, 2, 3.0); };");
 		assertFalse(parser.parse());
-		assertEquals("Incorrect number of parameters for function test at line: 1 position: 68\n", errContent.toString());
+		assertEquals("Incorrect number of parameters for function test at line: 1 position: 68", errContent.toString().trim());
 	}
 	
 	@Test
 	public void testProg23() throws IOException{
 		parser.setLexReaderStr("program {int x; float y; if(x > y) then {} else{}; };");
 		assertFalse(parser.parse());
-		assertEquals("Type compatibility error for > at line: 1 position: 31\n", errContent.toString());
+		assertEquals("Type compatibility error for > at line: 1 position: 31", errContent.toString().trim());
 	}
 	
 }
