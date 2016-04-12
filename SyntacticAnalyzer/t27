@@ -1,0 +1,11 @@
+/*
+	Test Case 27: parameter passing mechanism
+*/
+
+program {
+	int i;
+//	i = func(1, 2, 3);
+};
+
+int func(int i, int j, int k){
+};

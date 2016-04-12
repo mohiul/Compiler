@@ -1,0 +1,23 @@
+/*
+	Test Case 14: type checking of an assignment statement
+	Test Case 15: type checking of the return value of a function
+	Test Case 16: function calls: right number and types of parameters upon call
+*/
+
+program {
+	int a;
+	float b;
+	a = b;
+	a = 1 * 2 + 2.2;
+	b = randomize(a, 1);
+	b = randomize(a, 1, b);
+	
+	
+};
+float randomize(int i, int j, float k)
+{
+	float value;
+	value = 100 * (2 + 3.0 / 7.0006);
+	value = 1.05 + ((2.04 * 2.47) - 3.0) + 7.0006 ;
+	return (value);
+};

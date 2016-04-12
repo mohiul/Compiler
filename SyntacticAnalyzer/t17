@@ -1,0 +1,8 @@
+/*
+	Test Case 17: memory allocation: int and float variable declarations
+*/
+
+program {
+	int a;
+	float b;
+};

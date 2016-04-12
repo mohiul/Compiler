@@ -1,0 +1,32 @@
+/*
+	Test Case 10: undefined member: data member, method, including deeply nested
+*/
+class Utility
+{
+	Utility util;
+	int i;
+	int test()
+	{
+		int t;
+		return (t);
+	};
+};
+program {
+	int a;
+	int b;
+	Utility u;
+	a = 1;
+	b = 1;
+	b = u.i;
+	b = randomize();
+	b = u.test();
+	b = u.util.util.util.util.i1;
+	b = u.util.util.util.util.test1();
+	
+};
+int randomize()
+{
+	int value;
+	value = 1;
+	return (value);
+};

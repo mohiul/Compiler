@@ -1,0 +1,18 @@
+/*
+	Test Case 23: expressions: arithmetic, relational and logic operators
+	Test Case 24: expressions: composite expressions and intermediate results
+*/
+
+program {
+	int a;
+	int b;
+	a = 1;
+	b = 2;
+	a = a + b;
+//	a = a - b;
+//	a = a and b;
+//	a = a * b;
+//	a = a / b;
+//	a = a or b;
+//	a = a + b - a * b / a and a or b;
+};

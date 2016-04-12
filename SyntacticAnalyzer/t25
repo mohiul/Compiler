@@ -1,0 +1,11 @@
+/*
+	Test Case 25: expressions: arithmetic, relational and logic operators
+*/
+
+program {
+};
+
+int func(){
+	int a;
+	a = 1;
+};

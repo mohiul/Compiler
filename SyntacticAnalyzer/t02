@@ -1,0 +1,26 @@
+/*
+	Test Case 2: variable declarations: int, float, class, array
+*/
+class Utility{
+	int i;
+};
+program {
+	int a;
+	float b;
+	int c[1][2][3];
+	Utility u;
+	Utility uArr[2][3];
+	
+	a = 1;
+	b = 1.0;
+	c[0][1][2] = 5;
+	a = uArr[1][2].i;
+	u.i = randomize();
+	
+};
+int randomize()
+{
+	int value;
+	value = 1;
+	return (value);
+};

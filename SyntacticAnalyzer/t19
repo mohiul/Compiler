@@ -1,0 +1,14 @@
+/*
+	Test Case 19: memory allocation: object variable declarations
+*/
+
+class C {
+	int var; // 1
+	float f; // 1 + 2 = 3
+	int a[2][3]; // 3 + 6 = 9
+	float c[2][3]; // 9 + 12 = 21
+};
+
+program {
+	C c;
+};

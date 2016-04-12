@@ -1,0 +1,28 @@
+/*
+	Test Case 11: forward/circular references: implementation of two passes
+*/
+class Utility1
+{
+	int i;
+	Utility2 util2;
+};
+class Utility2
+{
+	int j;
+	Utility1 util1;
+};
+program {
+	int b;
+	Utility1 u1;
+	Utility2 u2;
+	b = u1.i;
+	b = u2.j;
+	b = randomize();
+	
+};
+int randomize()
+{
+	int value;
+	value = 1;
+	return (value);
+};

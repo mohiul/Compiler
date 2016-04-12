@@ -1,0 +1,28 @@
+/*
+	Test Case 6: class declarations: data members, methods
+	Test Case 7: access to class members, including multiply nested and including arrays
+	Test Case 8: access to arrays : uni- and multi-dimensional, using expressions as index
+*/
+class Utility
+{
+	int i;
+	int j[2][3][4][5];
+	int k[10];
+	Utility util;
+	int test()
+	{
+		int t;
+		return (t);
+	};
+};
+program {
+	int a;
+	int b;
+	Utility u;
+	a = 1;
+	a = u.i;
+	b = u.test();
+	b = u.j[1][2][3][4].test();
+	b = u.util.util.util.j[1][2][3][4];
+	b = u.k[a + a * a or b and a * a / 1 and 4];
+};

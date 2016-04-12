@@ -1,0 +1,21 @@
+/*
+	Test Case 4: conditional statement, including nested without brackets
+*/
+program {
+	int a;
+	float b;
+	a = 1;
+	b = 1.0;	
+	if(a > 10) then {
+		b = 55.5;
+	} else {
+		b = 56.5;
+		a = 2;
+	};
+	
+	if(a > 10) then
+		b = 55.5;
+	else
+		b = 56.5;
+	;
+};

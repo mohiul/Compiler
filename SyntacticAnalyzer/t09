@@ -1,0 +1,29 @@
+/*
+	Test Case 9: undefined id: variable, class, function
+*/
+class Utility
+{
+	int i;
+	int test()
+	{
+		int t;
+		return (t);
+	};
+};
+program {
+	int a;
+	int b;
+	Utility1 u;
+	a = 1;
+	b1 = 1;
+	b = u.i1;
+	b = randomize1();
+	b = u.test1();
+	
+};
+int randomize()
+{
+	int value;
+	value = 1;
+	return (value);
+};

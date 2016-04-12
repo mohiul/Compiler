@@ -496,6 +496,7 @@ public class CodeGenerator {
 			SymbolTableRow row = tableHandler.getFunction(id.getValue());
 			if (row.getKind() == VariableKind.FUNCTION) {
 				String funcName = row.getVarName() + "res";
+				row.setTempVarName(funcName);
 				createVariable(funcName, row.getType());
 				currentProgramWriter = codeWriterFunction;
 			}

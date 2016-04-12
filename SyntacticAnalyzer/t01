@@ -1,0 +1,23 @@
+/*
+	Test Case 1: program function, free functions
+*/
+program {
+	int a;
+	int b;
+	a = 1;
+	b = 1;
+	b = randomize();
+	
+};
+int randomize()
+{
+	int value;
+	value = 1;
+	return (value);
+};
+int test()
+{
+	int value;
+	value = 1;
+	return (value);
+};

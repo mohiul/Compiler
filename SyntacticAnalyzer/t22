@@ -1,0 +1,10 @@
+/*
+	Test Case 22: Input/output: read from keyboard, write to standard output
+*/
+
+program {
+	int i; 
+	i = 0;
+	get(i);
+	put(i);
+};

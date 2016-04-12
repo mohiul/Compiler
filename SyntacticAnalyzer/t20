@@ -1,0 +1,17 @@
+/*
+	Test Case 20: loop statement: code block, jump-looping upon condition
+*/
+
+program {
+	for(int i = 0; i < 20; i = i + 1) {
+		put(i + 65);
+	};
+	
+/*
+	for(int i = 0; i < 5; i = i + 1) {
+		for(int k = 0; k < 20; k = k + 1) {
+			put(k + 65);
+		};
+	};
+*/
+};

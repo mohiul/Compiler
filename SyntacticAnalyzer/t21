@@ -1,0 +1,31 @@
+/*
+	Test Case 21: conditional statement: code blocks, jumping on condition
+*/
+
+program {
+	int i;
+	i = 1;
+	if (i > 1 ) then {
+		i = 1;
+	}
+	else {
+//		i = 2;
+	};
+	put(i + 55);
+/*	
+	if (i > 1 ) then {
+		if (i > 2 ) then {
+			i = 1;
+		} else {
+			i = 2;
+		};
+	} else {
+		if (i > 3 ) then {
+			i = 3;
+		} else {
+			i = 4;
+		};
+	};
+	put(i + 55);
+*/
+};

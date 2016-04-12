@@ -1,0 +1,47 @@
+/*
+	Test Case 12: multiply defined id: variable, class, function, class member
+	Test Case 13: arrays: using right number of dimensions
+*/
+class Utility
+{
+	int i;
+	int i;
+	int j[1][2][3];
+	Utility util;
+	int test()
+	{
+		int value;
+		value = 1;
+		return (value);
+	};
+};
+
+class Utility
+{
+	int j;
+	Utility util;
+};
+
+program {
+	int b;
+	int b;
+	Utility u;
+	b = u.util.util.util.i;
+	b = u.i;
+	b = randomize();
+	b = u.j[0][1];
+	
+};
+int randomize()
+{
+	int value;
+	value = 1;
+	return (value);
+};
+
+int randomize()
+{
+	int value;
+	value = 1;
+	return (value);
+};

@@ -1,0 +1,14 @@
+/*
+	Test Case 26: function call mechanism: jump on call, return value
+*/
+
+program {
+	int i;
+//	i = func();
+};
+
+int func(){
+	int a;
+	a = 1;
+	return (a);
+};
