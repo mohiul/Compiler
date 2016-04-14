@@ -1,7 +1,9 @@
+Table: No Entry
+
 Table: Global
 Name: program kind: FUNCTION type: null
+Name: test kind: FUNCTION type: int
 
 Table: program
-Name: z kind: VARIABLE type: int
-Name: y kind: VARIABLE type: int[1]
+Name: i kind: VARIABLE type: int
 

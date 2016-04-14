@@ -15,7 +15,6 @@ import java.util.Map;
 import lex.Constants;
 import lex.Token;
 import sdt.Expression;
-import sdt.Factor;
 import sdt.Type;
 
 public class SymbolTableHandler {
@@ -478,6 +477,13 @@ public class SymbolTableHandler {
 	
 	public Writer getErrWriter() {
 		return errWriter;
+	}
+
+	public boolean checkReturnType(Type exprType, Token returnTk) throws IOException {
+		SymbolTableRow row = functionTableScope.tableRowMap.get(currentTableScope.getTableName());
+		Type expectedType = new Type();
+		expectedType.typeName = row.getType().getTypeName();
+		return checkCompatableType(expectedType, exprType, returnTk);
 	}
 
 }

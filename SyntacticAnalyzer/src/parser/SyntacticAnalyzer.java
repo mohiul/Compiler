@@ -39,9 +39,6 @@ import sdt.VariableTail;
 import sdt.VariableTail1;
 import sdt.VariableTail2;
 import smbl.SymbolTableHandler;
-import smbl.SymbolTableRow;
-import smbl.VariableKind;
-import smbl.VariableType;
 
 public class SyntacticAnalyzer {
 
@@ -874,11 +871,13 @@ public class SyntacticAnalyzer {
 			return false;
 		if(lookAheadIsIn(lookAhead, new String[]{ Constants.RESERVED_WORD_RETURN })){
 			Expression expression = new Expression();
-			if(match(Constants.RESERVED_WORD_RETURN) 
+			Token returnTk = new Token(); 
+			if(match(Constants.RESERVED_WORD_RETURN, returnTk) 
 					&& match(Constants.OPENPAR)
 					&& expr(expression)
 					&& match(Constants.CLOSEPAR)
-					&& match(Constants.SEMICOLON)){
+					&& match(Constants.SEMICOLON)
+					&& tableHandler.checkReturnType(expression.arithExpr.upType, returnTk)){
 				if(secondPass){
 					grammarWriter.write("statement -> 'return' '(' expr ')' ';'\n");
 					codeGenerator.genCodeReturn(expression);

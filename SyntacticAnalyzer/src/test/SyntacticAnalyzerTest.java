@@ -244,7 +244,7 @@ public class SyntacticAnalyzerTest {
 	
 	@Test
 	public void testFunctionWithReturn() throws IOException{
-		parser.setLexReaderStr("program { int id; }; float func(int array[100]){ int minValue; return (minValue); };");
+		parser.setLexReaderStr("program { int id; }; float func(int array[100]){ float minValue; return (minValue); };");
 		assertTrue(parser.parse());
 	}
 	
@@ -306,7 +306,7 @@ public class SyntacticAnalyzerTest {
 	
 	@Test
 	public void testExpressions() throws IOException{
-		parser.setLexReaderStr("program { float value; value = 100.1 * (2.2 + 3.0 / 7.0006); value = 1.05 + ((2.04 * 2.47) - 3.0) + 7.0006 ; return (value); };");
+		parser.setLexReaderStr("program { float value; value = 100.1 * (2.2 + 3.0 / 7.0006); value = 1.05 + ((2.04 * 2.47) - 3.0) + 7.0006 ; };");
 		assertTrue(parser.parse());
 		
 	}
@@ -350,6 +350,13 @@ public class SyntacticAnalyzerTest {
 		parser.setLexReaderStr("program {int x; float y; if(x > y) then {} else{}; };");
 		assertFalse(parser.parse());
 		assertEquals("Type compatibility error for > at line: 1 position: 31", errContent.toString().trim());
+	}
+	
+	@Test
+	public void testProg24() throws IOException{
+		parser.setLexReaderStr("program { int i; i = test(); } ; int test(){ return (1.0);};");
+		assertFalse(parser.parse());
+		assertEquals("Type compatibility error for return at line: 1 position: 46", errContent.toString().trim());
 	}
 	
 }

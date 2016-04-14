@@ -145,4 +145,10 @@ public class SyntacticAnalyzerTest2 {
 		assertTrue(parser.parse());
 	}
 	
+	@Test
+	public void testProg18() throws IOException{
+		parser.setLexReaderStr("program { int i; i = test(); } ; int test(){ return (0);};");
+		assertTrue(parser.parse());
+	}
+	
 }
