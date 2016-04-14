@@ -1,0 +1,9 @@
+/*
+	Test Case 28: offset calculation mechanism: arrays processing (uni-dimensional), using data members
+*/
+
+program {
+	int i[2];
+	i[0] = 10;
+	i[1] = 11;
+};

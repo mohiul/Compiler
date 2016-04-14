@@ -1,8 +1,11 @@
-Table: No Entry
+Table: func
+Name: i kind: PARAMETER type: int
+Name: j kind: PARAMETER type: int
+Name: k kind: PARAMETER type: int
 
 Table: Global
 Name: program kind: FUNCTION type: null
-Name: test kind: FUNCTION type: int
+Name: func kind: FUNCTION type: int
 
 Table: program
 Name: i kind: VARIABLE type: int

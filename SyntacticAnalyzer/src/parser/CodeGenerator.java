@@ -495,9 +495,8 @@ public class CodeGenerator {
 		if(secondPass){
 			SymbolTableRow row = tableHandler.getFunction(id.getValue());
 			if (row.getKind() == VariableKind.FUNCTION) {
-				String funcName = row.getVarName() + "res";
-				row.setTempVarName(funcName);
-				createVariable(funcName, row.getType());
+				createVariable(row.getVarName() + "res", row.getType());
+				codeWriterFunction.write(row.getVarName());
 				currentProgramWriter = codeWriterFunction;
 			}
 		}
@@ -522,9 +521,6 @@ public class CodeGenerator {
 					return false;
 				}
 				String instr = "\t sw \t " + paramName + "(r0),r" + regCount + "\n";
-				if(count.count == 0){
-					instr = functionId.getValue() + instr;
-				}
 				codeWriterFunction.write(instr);
 				count.count++;
 			}

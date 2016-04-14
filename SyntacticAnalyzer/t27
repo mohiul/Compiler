@@ -4,8 +4,9 @@
 
 program {
 	int i;
-//	i = func(1, 2, 3);
+	i = func(1, 2, 3);
 };
 
 int func(int i, int j, int k){
+	return (i);
 };

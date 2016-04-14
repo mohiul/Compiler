@@ -1563,6 +1563,8 @@ public class SyntacticAnalyzer {
 			AParams aParams = new AParams();
 			factorTail.upAParams = aParams;
 			aParams.downId = factorTail.downId;
+			Token tempVar = new Token();
+			aParams.tempVar = tempVar;
 			if(match(Constants.OPENPAR) 
 					&& aParams(aParams) 
 					&& match(Constants.CLOSEPAR)){
@@ -1571,6 +1573,7 @@ public class SyntacticAnalyzer {
 					if(aParams.tempVar != null){
 						factorTail.tempVar = aParams.tempVar;						
 					}
+					codeGenerator.genCodeFuncCall(aParams.downId, aParams.getExprList(), aParams.tempVar);
 				}
 			} else {
 				error = true;
@@ -1978,14 +1981,11 @@ public class SyntacticAnalyzer {
 			AParamsTails aParamsTails = new AParamsTails();
 			aParams.expression = expression;
 			aParams.aParamsTails = aParamsTails;
-			Token tempVar = new Token();
-			aParams.tempVar = tempVar;
 			if(expr(expression) 
 					&& aParamsTails(aParamsTails)
 					&& tableHandler.checkFuncParams(aParams.downId, aParams.getExprList())){
 				if(secondPass){
 					grammarWriter.write("aParams -> expr aParamsTails\n");
-					codeGenerator.genCodeFuncCall(aParams.downId, aParams.getExprList(), tempVar);
 				}
 			} else {
 				error = true;
