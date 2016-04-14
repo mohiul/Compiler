@@ -49,7 +49,7 @@
   </class>  
   <class id="6" language="java" name="smbl.SymbolTable" project="SyntacticAnalyzer" 
     file="/SyntacticAnalyzer/src/smbl/SymbolTable.java" binary="false" corner="BOTTOM_RIGHT">    
-    <position height="150" width="153" x="717" y="190"/>    
+    <position height="150" width="153" x="673" y="190"/>    
     <display autosize="false" stereotype="true" package="true" initial-value="false" signature="true" 
       sort-features="false" accessors="true" visibility="true">      
       <attributes public="true" package="true" protected="true" private="true" static="true"/>      
@@ -103,7 +103,7 @@
   </class>  
   <class id="12" language="java" name="smbl.SymbolTableHandler" project="SyntacticAnalyzer" 
     file="/SyntacticAnalyzer/src/smbl/SymbolTableHandler.java" binary="false" corner="BOTTOM_RIGHT">    
-    <position height="124" width="198" x="699" y="-13"/>    
+    <position height="124" width="198" x="655" y="-13"/>    
     <display autosize="false" stereotype="true" package="true" initial-value="false" signature="true" 
       sort-features="false" accessors="true" visibility="true">      
       <attributes public="true" package="true" protected="true" private="true" static="true"/>      
@@ -136,6 +136,7 @@
     <display labels="true" multiplicity="true"/>  
   </association>  
   <association id="20">    
+    <bendpoint x="859" y="181"/>    
     <end type="SOURCE" refId="12" navigable="false">      
       <attribute id="21" name="currentTableScope"/>      
       <multiplicity id="22" minimum="0" maximum="1"/>    
@@ -216,6 +217,7 @@
     <display labels="true" multiplicity="true"/>  
   </association>  
   <association id="50">    
+    <bendpoint x="902" y="198"/>    
     <end type="SOURCE" refId="12" navigable="false">      
       <attribute id="51" name="globalTable"/>      
       <multiplicity id="52" minimum="0" maximum="1"/>    
@@ -240,6 +242,7 @@
     <display labels="true" multiplicity="true"/>  
   </association>  
   <association id="59">    
+    <bendpoint x="890" y="133"/>    
     <end type="SOURCE" refId="12" navigable="false">      
       <attribute id="60" name="functionTableScope"/>      
       <multiplicity id="61" minimum="0" maximum="1"/>    
@@ -248,6 +251,7 @@
     <display labels="true" multiplicity="true"/>  
   </association>  
   <association id="62">    
+    <bendpoint x="666" y="195"/>    
     <end type="SOURCE" refId="12" navigable="false">      
       <attribute id="63" name="classTableScope"/>      
       <multiplicity id="64" minimum="0" maximum="1"/>    
