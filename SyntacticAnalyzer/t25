@@ -1,5 +1,5 @@
 /*
-	Test Case 25: expressions: arithmetic, relational and logic operators
+	Test Case 25: function declaration code block (alias to jump to, jump back)
 */
 
 program {
